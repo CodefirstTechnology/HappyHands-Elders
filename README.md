@@ -1,26 +1,99 @@
-# ChildCare
+# HappyHands Elders (ChildCare Platform)
 
-**ChildCare** is a childcare marketplace for India. Parents discover and book verified caregivers; coordinators onboard and verify caregivers; caregivers manage schedules, time tracking, and earnings through a dedicated mobile app.
+**ChildCare** is a childcare marketplace built for India. Parents discover and book verified caregivers; coordinators onboard and verify staff in the field; caregivers manage schedules, GPS tracking, time entries, and earnings through a dedicated mobile app.
 
-This monorepo contains the full product stack: REST API, coordinator web portal, two Expo mobile apps (Parent + Caregiver), and production Docker deployment.
+This monorepo contains the full product stack:
+
+| Component | Folder | Tech |
+|-----------|--------|------|
+| REST API | `Backend/` | Node.js 20, Express 5, Prisma, PostgreSQL, Redis |
+| Coordinator portal | `Agent/onboarding-agent-web/` | React 19, Vite 8, Tailwind CSS 4 |
+| Parent app | `House Owner App/house-owner-app/` | Expo 54, React Native 0.81 |
+| Caregiver app | `Servant/servant-app/` | Expo 54, React Native 0.81 |
+| Deploy | `deploy/`, `docker-compose.yml` | Docker Compose + host nginx |
+
+**Repository:** [github.com/CodefirstTechnology/HappyHands-Elders](https://github.com/CodefirstTechnology/HappyHands-Elders)
 
 ---
 
 ## Table of contents
 
-1. [Architecture](#architecture)
-2. [User roles & flows](#user-roles--flows)
-3. [Monorepo structure](#monorepo-structure)
-4. [Backend API](#backend-api)
-5. [Coordinator portal (web)](#coordinator-portal-web)
-6. [Parent app (mobile)](#parent-app-mobile)
-7. [Caregiver app (mobile)](#caregiver-app-mobile)
-8. [Marketing website](#marketing-website)
-9. [Local development setup](#local-development-setup)
-10. [Environment variables](#environment-variables)
+1. [Quick start (local)](#quick-start-local)
+2. [Architecture](#architecture)
+3. [User roles & flows](#user-roles--flows)
+4. [Monorepo structure](#monorepo-structure)
+5. [Backend API](#backend-api)
+6. [Coordinator portal](#coordinator-portal)
+7. [Parent app (mobile)](#parent-app-mobile)
+8. [Caregiver app (mobile)](#caregiver-app-mobile)
+9. [Marketing website](#marketing-website)
+10. [Environment variables & secrets](#environment-variables--secrets)
 11. [Production deployment](#production-deployment)
 12. [Business rules](#business-rules)
 13. [UI & design](#ui--design)
+14. [Troubleshooting](#troubleshooting)
+15. [Per-project READMEs](#per-project-readmes)
+
+---
+
+## Quick start (local)
+
+Run these in order on a machine with **Node.js 20+**, **PostgreSQL 16+**, and **Redis 7+**.
+
+### 1. Database & Redis (Docker option)
+
+```bash
+docker run -d --name childcare-pg \
+  -e POSTGRES_PASSWORD=password -e POSTGRES_DB=childcare \
+  -p 5432:5432 postgres:16-alpine
+
+docker run -d --name childcare-redis -p 6379:6379 redis:7-alpine
+```
+
+### 2. Backend API
+
+```bash
+cd Backend
+cp .env.example .env          # Edit DATABASE_URL, JWT secrets, etc.
+npm install
+npx prisma db push
+npx prisma generate
+node prisma/seed.js           # Admin, coordinator, skills
+npm run dev                   # http://localhost:5000
+```
+
+Health: `GET http://localhost:5000/health`
+
+### 3. Coordinator portal
+
+```bash
+cd Agent/onboarding-agent-web
+cp .env.example .env          # VITE_API_BASE_URL=http://localhost:5000/api/v1
+npm install
+npm run dev                   # http://localhost:5173
+```
+
+Login: `coordinator@childcare.com` / `ChildCare@123` (or admin account below).
+
+### 4. Mobile apps
+
+```bash
+# Parent app
+cd "House Owner App/house-owner-app"
+cp .env.example .env
+npm install && npx expo install
+npm start
+
+# Caregiver app (separate terminal)
+cd Servant/servant-app
+cp .env.example .env
+npm install && npx expo install
+npm start
+```
+
+On a **physical phone**, set `EXPO_PUBLIC_API_BASE_URL` to your PC's LAN IP (from `ipconfig`), not `localhost`. Restart Expo with `npx expo start -c` after changing `.env`.
+
+Open the workspace in VS Code/Cursor: `StaffEra.code-workspace`.
 
 ---
 
@@ -59,8 +132,8 @@ flowchart TB
 | API | Node.js 20, Express 5, Prisma 5, PostgreSQL 16, Redis 7, BullMQ |
 | Coordinator portal | React 19, Vite 8, React Router 7, TanStack Query, Tailwind CSS 4 |
 | Mobile apps | Expo 54, expo-router 6, React Native 0.81, TanStack Query, Zustand, i18next |
-| Auth | JWT access tokens (15m) + refresh tokens (7d), bcrypt passwords |
-| Maps & geo | Google Maps / Places / Geocoding APIs |
+| Auth | JWT access (15m) + refresh (7d), bcrypt passwords |
+| Maps & geo | Google Maps / Places / Geocoding |
 | KYC | UIDAI Aadhaar offline XML verification |
 | SMS | MSG91 or Twilio (care-start OTP to parents) |
 | Deploy | Docker Compose + host nginx + Let's Encrypt |
@@ -71,75 +144,10 @@ flowchart TB
 
 | Role | ID | How they join | Primary surface |
 |------|----|---------------|-----------------|
-| **Admin** | 1 | Seeded (`admin@childcare.com`) | Coordinator portal → `/admin` |
+| **Admin** | 1 | Seeded | Coordinator portal → `/admin` |
 | **Coordinator** | 2 | Created by admin or seeded | Coordinator portal |
-| **Caregiver** | 3 | Onboarded by coordinator (primary) or self-register (pending review) | Caregiver app |
-| **Parent** | 4 | Self-register in mobile app | Parent app |
-
-### Typical journey
-
-1. **Coordinator** logs into the portal and creates a caregiver profile (ID proof, photo, childcare skills, rates, zones, certifications).
-2. **Coordinator** verifies the caregiver → status becomes `VERIFIED` (optionally after Aadhaar XML KYC).
-3. **Parent** registers, browses verified caregivers, and books **recurring childcare contract** (MONTHLY) or **babysitting session** (SESSION).
-4. **Booking options:**
-   - **Direct booking** — pick a specific verified caregiver.
-   - **Open area request** — nearby caregivers matching skill/zone get notified and race to accept.
-5. **Caregiver** confirms; on arrival marks **arrived at home**; verifies **care-start OTP** (SMS to parent).
-6. **Caregiver** clocks in/out; booking completes; **parent** leaves a review including **child safety rating** (only after `COMPLETED`).
-
----
-
-## Monorepo structure
-
-```
-childcare/
-├── Backend/                    # REST API, Prisma schema, uploads
-├── Coordinator/
-│   └── onboarding-agent-web/   # Coordinator + admin web portal
-├── Parent App/
-│   └── house-owner-app/        # Expo app for customers
-├── Caregiver/
-│   └── servant-app/            # Expo app for staff
-├── Staffera_website/           # Marketing site (referenced in docker-compose)
-├── deploy/
-│   ├── nginx/childcare.conf     # Host nginx template
-│   └── scripts/deploy.sh       # One-command production deploy
-├── docker-compose.yml          # Production stack
-├── .env.production.example     # VPS environment template
-└── README.md                   # This file
-```
-
-| App | Path | Default dev URL |
-|-----|------|-----------------|
-| Backend API | `Backend/` | `http://localhost:5000/api/v1` |
-| Coordinator portal | `Coordinator/onboarding-agent-web/` | `http://localhost:5173` |
-| Parent app | `Parent App/house-owner-app/` | Expo dev server |
-| Caregiver app | `Caregiver/servant-app/` | Expo dev server |
-
----
-
-## Backend API
-
-### Prerequisites
-
-- Node.js 20+
-- PostgreSQL 16+
-- Redis 7+ (queues / caching)
-
-### Quick start
-
-```bash
-cd Backend
-cp .env.example .env          # Configure DATABASE_URL, JWT secrets, etc.
-npm install
-npx prisma db push            # Apply schema
-npx prisma generate
-node prisma/seed.js           # Roles, admin, coordinator, childcare skills
-npm run dev                   # nodemon — or npm start for production mode
-```
-
-**Health check:** `GET http://localhost:5000/health`  
-**API root:** `GET http://localhost:5000/` → `{ "success": true, "message": "ChildCare API Running" }`
+| **Caregiver** | 3 | Onboarded by coordinator (primary) or self-register (pending) | Caregiver app |
+| **Parent** | 4 | Self-register in parent app | Parent app |
 
 ### Default seeded accounts
 
@@ -148,18 +156,86 @@ npm run dev                   # nodemon — or npm start for production mode
 | Admin | `admin@childcare.com` | `ChildCare@123` |
 | Coordinator | `coordinator@childcare.com` | `ChildCare@123` |
 
-Parents register via the app (`POST /api/v1/auth/register-parent`). Caregivers are created by coordinators (`POST /api/v1/coordinator/caregivers`); default onboarding password in the coordinator form is `Caregiver@123` unless changed.
+Parents register via `POST /api/v1/auth/register-parent`. Caregivers are created by coordinators; default onboarding password in the portal form is `Caregiver@123` unless changed.
+
+### Typical journey
+
+1. **Coordinator** logs into the portal and creates a caregiver (photo, ID proof, skills, rates, zones).
+2. **Coordinator** verifies the caregiver → status `VERIFIED` (optionally after Aadhaar XML KYC).
+3. **Parent** registers, browses verified caregivers, books **MONTHLY** (recurring) or **SESSION** (one-off).
+4. **Booking:** direct (pick caregiver) or **open area** (nearby caregivers notified, race to accept).
+5. **Caregiver** confirms → marks **arrived** → verifies **care-start OTP** (SMS to parent).
+6. **Caregiver** clocks in/out; booking completes; **parent** leaves a review with **child safety rating**.
+
+---
+
+## Monorepo structure
+
+```
+HappyHands-Elders/
+├── Backend/                         # REST API, Prisma, uploads
+│   ├── prisma/                      # Schema + migrations + seed
+│   ├── src/                         # Express app (controllers, routes, services)
+│   └── certs/                       # UIDAI public certificates (Aadhaar KYC)
+├── Agent/
+│   └── onboarding-agent-web/        # Coordinator + admin web portal
+├── House Owner App/
+│   └── house-owner-app/             # Expo parent app
+├── Servant/
+│   └── servant-app/                 # Expo caregiver app
+├── deploy/
+│   ├── nginx/childcare.conf         # Host nginx template
+│   └── scripts/deploy.sh            # Production deploy helper
+├── scripts/
+│   ├── check-no-secrets.js          # Pre-commit secret scanner
+│   └── restore-from-transcript.js   # Dev utility
+├── .githooks/pre-commit             # Runs secret check on commit
+├── docker-compose.yml               # Production Docker stack
+├── .env.production.example          # VPS env template
+├── StaffEra.code-workspace          # VS Code multi-root workspace
+└── README.md                        # This file
+```
+
+| App | Path | Default dev URL |
+|-----|------|-----------------|
+| Backend API | `Backend/` | `http://localhost:5000/api/v1` |
+| Coordinator portal | `Agent/onboarding-agent-web/` | `http://localhost:5173` |
+| Parent app | `House Owner App/house-owner-app/` | Expo dev server |
+| Caregiver app | `Servant/servant-app/` | Expo dev server |
+
+> **Note:** Some internal filenames still use legacy names (`servant`, `house-owner`). User-facing copy and API routes use **caregiver** and **parent**.
+
+---
+
+## Backend API
+
+See [`Backend/README.md`](Backend/README.md) for full backend documentation.
+
+### Prerequisites
+
+- Node.js 20+
+- PostgreSQL 16+
+- Redis 7+
+
+### NPM scripts
+
+```bash
+npm start              # Production server
+npm run dev            # nodemon hot reload
+npm run seed           # Roles, admin, coordinator, skills
+npm run seed:caregivers # Additional caregiver test data
+```
 
 ### API route map
 
-All routes are prefixed with `/api/v1`.
+All routes prefixed with `/api/v1`.
 
 #### Authentication — `/auth`
 
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|
 | POST | `/register-parent` | — | Parent signup |
-| POST | `/register-caregiver` | — | Self-registration (pending coordinator review) |
+| POST | `/register-caregiver` | — | Self-registration (pending review) |
 | POST | `/login` | — | Email/password login |
 | POST | `/refresh` | — | Refresh access token |
 | POST | `/logout` | Bearer | Invalidate refresh token |
@@ -173,12 +249,12 @@ All routes are prefixed with `/api/v1`.
 
 | Method | Path | Role | Description |
 |--------|------|------|-------------|
-| GET | `/` | PARENT | List verified caregivers (browse; filter by age range, certs, max children) |
+| GET | `/` | PARENT | List verified caregivers |
 | GET | `/me` | CAREGIVER | Own profile |
 | PATCH | `/me` | CAREGIVER | Update own profile |
 | GET | `/me/schedule` | CAREGIVER | Upcoming bookings |
 | GET | `/me/time-entries` | CAREGIVER | Time entry history |
-| GET | `/:id` | Any authenticated | Caregiver detail |
+| GET | `/:id` | Authenticated | Caregiver detail |
 
 #### Bookings — `/bookings`
 
@@ -186,9 +262,9 @@ All routes are prefixed with `/api/v1`.
 |--------|------|------|-------------|
 | POST | `/` | PARENT | Create booking (direct or open area) |
 | GET | `/` | Any | List own bookings |
-| GET | `/open-requests` | CAREGIVER | Pending area requests in caregiver's zones |
+| GET | `/open-requests` | CAREGIVER | Pending area requests |
 | GET | `/:id` | Any | Booking detail |
-| GET | `/:id/tracking` | Any | Live caregiver location for active booking |
+| GET | `/:id/tracking` | Any | Live caregiver GPS |
 | POST | `/:id/tracking` | CAREGIVER | Push GPS updates |
 | PATCH | `/:id/confirm` | CAREGIVER | Accept booking |
 | PATCH | `/:id/reject` | CAREGIVER | Reject with reason |
@@ -197,10 +273,10 @@ All routes are prefixed with `/api/v1`.
 | POST | `/:id/resend-work-otp` | CAREGIVER | Resend OTP SMS |
 | PATCH | `/:id/cancel` | PARENT | Cancel booking |
 | PATCH | `/:id/complete` | Any | Mark completed |
-| POST | `/:id/review` | PARENT | Rate completed booking (incl. child safety rating) |
+| POST | `/:id/review` | PARENT | Rate completed booking |
 
-**Booking types:** `MONTHLY` (recurring contract) or `SESSION` (one-off slots).  
-**Booking statuses:** `PENDING` → `CONFIRMED` → `ARRIVED` → `OTP_PENDING` → `ACTIVE` → `COMPLETED` (or `CANCELLED` / `REJECTED` / `EXPIRED`).
+**Booking types:** `MONTHLY` | `SESSION`  
+**Statuses:** `PENDING` → `CONFIRMED` → `ARRIVED` → `OTP_PENDING` → `ACTIVE` → `COMPLETED` (or `CANCELLED` / `REJECTED` / `EXPIRED`)
 
 #### Coordinator — `/coordinator` (COORDINATOR or ADMIN)
 
@@ -208,14 +284,14 @@ All routes are prefixed with `/api/v1`.
 |--------|------|-------------|
 | GET | `/stats` | Dashboard metrics |
 | PATCH | `/profile` | Agency name, location, service radius |
-| POST | `/caregivers` | Onboard caregiver (multipart: photo + ID proof) |
+| POST | `/caregivers` | Onboard caregiver (multipart: photo + ID) |
 | GET | `/caregivers` | List onboarded caregivers |
 | GET | `/caregivers/:id` | Caregiver detail |
 | PATCH | `/caregivers/:id` | Update caregiver |
 | PATCH | `/caregivers/:id/password` | Set caregiver login password |
 | PATCH | `/caregivers/:id/verify` | Approve/reject verification |
 | POST | `/caregivers/:id/upload-id` | Upload ID proof |
-| GET/POST/PATCH/DELETE | `/caregivers/:id/zones` | Manage service zones |
+| GET/POST/PATCH/DELETE | `/caregivers/:id/zones` | Service zones |
 
 #### Admin — `/admin` (ADMIN only)
 
@@ -233,146 +309,113 @@ All routes are prefixed with `/api/v1`.
 
 | Prefix | Description |
 |--------|-------------|
-| `/skills` | Public skill list for forms |
-| `/time` | Caregiver clock-in/out, today/month/history |
-| `/zones` | Caregiver's own zones (`GET /me`) |
-| `/geo` | Places autocomplete, reverse geocode, map preview |
+| `/skills` | Public skill list |
+| `/time` | Caregiver clock-in/out |
+| `/zones` | Caregiver zones (`GET /me`) |
+| `/geo` | Places autocomplete, geocode, map preview |
 | `/kyc` | Aadhaar offline XML upload & verification |
-| `/notifications` | In-app notifications list & read state |
+| `/notifications` | In-app notifications |
 
-### Database models (Prisma)
+### Database (Prisma)
 
-Core entities: `User`, `Role`, `Parent`, `Caregiver`, `Coordinator`, `Booking`, `TimeEntry`, `Review`, `Zone`, `Skill`, `CaregiverSkill`, `Notification`, `BookingWorkStartOtp`, `RefreshToken`.
+Schema: `Backend/prisma/schema.prisma`
 
-Key enums:
+Core models: `User`, `Role`, `Parent`, `Caregiver`, `Coordinator`, `Booking`, `TimeEntry`, `Review`, `Zone`, `Skill`, `Notification`, `BookingWorkStartOtp`, `RefreshToken`.
 
-- `VerificationStatus`: `PENDING` | `UNDER_REVIEW` | `VERIFIED` | `REJECTED`
-- `BookingType`: `MONTHLY` | `SESSION`
-- `BookingStatus`: `PENDING` | `CONFIRMED` | `ACTIVE` | `COMPLETED` | `CANCELLED` | `REJECTED` | `EXPIRED` | `OTP_PENDING` | `ARRIVED`
-
-Schema file: `Backend/prisma/schema.prisma`
+Key enums: `VerificationStatus`, `BookingType`, `BookingStatus`, `CaregiverRegistrationSource`.
 
 ### File uploads
 
-Coordinator-uploaded ID proofs and profile photos are stored under `Backend/uploads/` (or `UPLOAD_DIR`). The database stores paths like `/uploads/<filename>`. Files are served at `GET /uploads/<filename>` with cross-origin headers for the agent portal and mobile apps.
-
-### NPM scripts
-
-```bash
-npm start              # Production server
-npm run dev            # nodemon with hot reload
-npm run seed           # Seed roles, admin, agent, skills
-npm run seed:servants  # Additional servant test data
-```
+ID proofs and profile photos stored under `Backend/uploads/` (configurable via `UPLOAD_DIR`). Served at `GET /uploads/<filename>`.
 
 ---
 
-## Coordinator onboarding portal (web)
+## Coordinator portal
 
-React SPA for field agents and platform admins to onboard servants, manage verification, and oversee operations.
+See [`Agent/onboarding-agent-web/README.md`](Agent/onboarding-agent-web/README.md).
+
+React SPA for field coordinators and platform admins.
 
 ### Stack
 
-- React 19 + Vite 8
-- React Router 7 (nested layouts)
-- TanStack Query (server state)
-- React Hook Form + Zod validation
-- Tailwind CSS 4
-- Axios HTTP client
+React 19 · Vite 8 · React Router 7 · TanStack Query · React Hook Form + Zod · Tailwind CSS 4 · Axios
 
 ### Local setup
 
 ```bash
-cd Coordinator/onboarding-agent-web
+cd Agent/onboarding-agent-web
 cp .env.example .env
 npm install
 npm run dev
 ```
 
-Open `http://localhost:5173`. Login with `agent@childcare.com` / `ChildCare@123`.
+Set `VITE_API_BASE_URL=http://localhost:5000/api/v1` in `.env`.
 
-Set `VITE_API_BASE_URL=http://localhost:5000/api/v1` in `.env`. Upload images load from the API origin (`/uploads/...`).
-
-### Routes & features
+### Routes
 
 | Path | Role | Feature |
 |------|------|---------|
-| `/login` | — | Coordinator/admin login |
-| `/` | AGENT, ADMIN | Dashboard with stats |
-| `/registrations` | AGENT, ADMIN | Self-registered servants pending review |
-| `/servants` | AGENT, ADMIN | Caregiver list |
-| `/servants/new` | AGENT, ADMIN | Onboard new servant (photo, ID, skills, rates) |
-| `/servants/:id` | AGENT, ADMIN | Caregiver detail & verification |
-| `/servants/:id/edit` | AGENT, ADMIN | Edit servant profile |
-| `/profile` | AGENT, ADMIN | Coordinator agency profile & service radius |
+| `/login` | — | Login |
+| `/` | COORDINATOR, ADMIN | Dashboard |
+| `/registrations` | COORDINATOR, ADMIN | Self-registered caregivers pending review |
+| `/caregivers` | COORDINATOR, ADMIN | Caregiver list |
+| `/caregivers/new` | COORDINATOR, ADMIN | Onboard new caregiver |
+| `/caregivers/:id` | COORDINATOR, ADMIN | Detail & verification |
+| `/caregivers/:id/edit` | COORDINATOR, ADMIN | Edit profile |
+| `/profile` | COORDINATOR, ADMIN | Agency profile & service radius |
 | `/admin` | ADMIN | Admin dashboard |
-| `/admin/agents` | ADMIN | Create/edit agents |
+| `/admin/agents` | ADMIN | Manage coordinators |
 | `/admin/users` | ADMIN | User management |
 | `/admin/bookings` | ADMIN | All bookings |
-| `/admin/servants` | ADMIN | All servants |
+| `/admin/caregivers` | ADMIN | All caregivers |
 | `/admin/skills` | ADMIN | Skill catalog CRUD |
 
-### Build for production
+### Production build
 
 ```bash
-npm run build    # Output in dist/
-npm run preview  # Local preview of production build
+npm run build    # dist/
+npm run preview  # Local preview
 ```
 
-Docker image is built via `Coordinator/onboarding-agent-web/Dockerfile` (nginx serves static files).
+Docker: `Agent/onboarding-agent-web/Dockerfile` (nginx serves static files).
 
 ---
 
 ## Parent app (mobile)
 
-Expo app for house owners to browse staff, request bookings, track live location, verify work-start OTP, and leave reviews.
+See [`House Owner App/house-owner-app/README.md`](House%20Owner%20App/house-owner-app/README.md).
+
+Expo app for parents: browse caregivers, book sessions, live tracking, work-start OTP, reviews.
 
 ### Stack
 
-- Expo SDK 54, expo-router 6
-- React Native 0.81, React 19
-- TanStack Query, Zustand, Axios
-- react-native-maps + Google Maps
-- i18next (English, Hindi, Marathi)
-- expo-secure-store (token storage)
-- expo-location (address picker)
+Expo SDK 54 · expo-router 6 · React Native 0.81 · TanStack Query · Zustand · react-native-maps · i18next (EN / HI / MR) · expo-secure-store · expo-location
 
 ### Local setup
 
 ```bash
-cd "Parent App/house-owner-app"
+cd "House Owner App/house-owner-app"
 cp .env.example .env
-npm install
-npx expo install
+npm install && npx expo install
 npm start
 ```
 
-Press `a` for Android emulator, `i` for iOS simulator, or scan QR with Expo Go / dev build.
+### Screens (expo-router)
 
-**Physical device:** use your PC's LAN IP in `EXPO_PUBLIC_API_BASE_URL`, not `localhost`:
-
-```bash
-# Windows: ipconfig → IPv4 Address
-EXPO_PUBLIC_API_BASE_URL=http://localhost:5000/api/v1
-```
-
-After changing `.env`, restart with `npx expo start -c`.
-
-### App screens (expo-router)
-
-| Tab / Screen | Path | Description |
-|--------------|------|-------------|
-| Home | `(main)/home` | Dashboard, quick actions |
-| Browse | `(main)/browse` | Search verified servants by skill |
-| Caregiver detail | `(main)/browse/[id]` | Profile, rates, book CTA |
-| Bookings | `(main)/bookings` | Active & past bookings |
-| New booking | `(main)/bookings/new` | Monthly or session request |
-| Booking detail | `(main)/bookings/[id]` | Status, live map, work-start OTP card |
+| Screen | Path | Description |
+|--------|------|-------------|
+| Home | `(main)/home` | Dashboard |
+| Browse | `(main)/browse` | Search verified caregivers |
+| Caregiver detail | `(main)/browse/[id]` | Profile, book CTA |
+| Bookings | `(main)/bookings` | Active & past |
+| New booking | `(main)/bookings/new` | Monthly or session |
+| Open request | `(main)/bookings/request` | Area-wide request |
+| Booking detail | `(main)/bookings/[id]` | Status, map, OTP |
 | Profile | `(main)/profile` | Account, address, language |
-| Notifications | `(main)/notifications` | In-app alerts |
-| Login / Register | `(auth)/login`, `(auth)/register` | Auth flows |
+| Notifications | `(main)/notifications` | Alerts |
+| Auth | `(auth)/login`, `(auth)/register` | Sign in / sign up |
 
-### Release builds (EAS)
+### Release (EAS)
 
 ```bash
 npm run eas:env:push              # Push .env to EAS preview
@@ -380,7 +423,7 @@ npm run eas:env:push:production   # Push .env to EAS production
 npm run build:apk                 # Android APK (preview profile)
 ```
 
-Configure `eas.json` and Expo project ID before cloud builds. For production APKs set:
+Production API URL example:
 
 ```bash
 EXPO_PUBLIC_API_BASE_URL=https://api.yourdomain.com/api/v1
@@ -390,134 +433,107 @@ EXPO_PUBLIC_API_BASE_URL=https://api.yourdomain.com/api/v1
 
 ## Caregiver app (mobile)
 
-Expo app for onboarded staff to view schedules, accept open area requests, track time, share live location, verify Aadhaar, and view earnings.
+See [`Servant/servant-app/README.md`](Servant/servant-app/README.md).
+
+Expo app for onboarded caregivers: schedules, open requests, time tracking, GPS, Aadhaar KYC, earnings.
 
 ### Stack
 
-Same core as Parent app, plus:
-
-- expo-notifications (booking request alerts)
-- expo-haptics (pending request vibration)
-- expo-document-picker (Aadhaar ZIP upload)
+Same core as parent app, plus expo-notifications, expo-haptics, expo-document-picker (Aadhaar ZIP).
 
 ### Local setup
 
 ```bash
-cd Caregiver/servant-app
+cd Servant/servant-app
 cp .env.example .env
-npm install
-npx expo install
+npm install && npx expo install
 npm start
 ```
 
-**Important:** Caregivers cannot use the app until an agent creates their account in the portal. Login uses the email/password set during onboarding.
+**Caregivers cannot log in** until a coordinator creates their account in the portal and sets a password.
 
-For native Android builds with maps:
+Native Android with maps: `npm run android` (`expo run:android`).
 
-```bash
-npm run android    # expo run:android (dev client)
-```
+### Screens
 
-### App screens
-
-| Tab / Screen | Path | Description |
-|--------------|------|-------------|
-| Home | `(main)/home` | Today's overview, open requests |
-| Schedule | `(main)/schedule` | Upcoming & active bookings |
-| Booking detail | `(main)/schedule/[id]` | Accept/reject, navigate, arrived, OTP |
-| Time | `(main)/time` | Clock in/out for active booking |
-| Time history | `(main)/time/history` | Past time entries |
+| Screen | Path | Description |
+|--------|------|-------------|
+| Home | `(main)/home` | Today, open requests |
+| Schedule | `(main)/schedule` | Bookings |
+| Booking detail | `(main)/schedule/[id]` | Accept, navigate, OTP |
+| Time | `(main)/time` | Clock in/out |
+| Time history | `(main)/time/history` | Past entries |
 | Earnings | `(main)/earnings` | Income summary |
-| Profile | `(main)/profile` | Rates, availability, bank details |
-| Aadhaar verify | `(main)/profile/verify-aadhaar` | Upload UIDAI offline XML |
-| Zones | `(main)/zones` | Service area management |
+| Profile | `(main)/profile` | Rates, bank details |
+| Zones | `(main)/zones` | Service areas |
 | Notifications | `(main)/notifications` | Job alerts |
-| Login | `(auth)/login` | Caregiver login (no self-signup primary flow) |
+| Auth | `(auth)/login`, `(auth)/register` | Login / optional self-register |
 
-### Alerts
-
-The app polls for open booking requests and triggers vibration + notifications when new area jobs match the servant's zones and skills.
+Open booking requests trigger vibration + push notifications when they match the caregiver's zones and skills.
 
 ---
 
 ## Marketing website
 
-The production Docker stack includes a `Staffera_website` service (port `15001`) — a Vite marketing site with links to app stores and the agent portal. Add or clone the site into `Staffera_website/` before running `docker compose up` if that folder is not yet in your checkout.
+Production Docker Compose includes a **website** service built from `ChildCare_website/` (port `15001`). This folder is **not included in the repo yet** — add or clone your marketing site there before running the full stack.
 
 Build args (from `.env.production.example`):
 
-- `VITE_HOUSE_OWNER_APP_URL`, `VITE_SERVANT_APP_URL`
-- `VITE_AGENT_PORTAL_URL`
+- `VITE_PARENT_APP_URL`, `VITE_CAREGIVER_APP_URL`
+- `VITE_COORDINATOR_PORTAL_URL`
 - `VITE_PLAY_STORE_*`, `VITE_APP_STORE_*`
 
+You can deploy API + coordinator portal without the website by commenting out the `website` service in `docker-compose.yml`.
+
 ---
 
-## Local development setup
+## Environment variables & secrets
 
-### Full stack (recommended order)
+### Never commit real API keys
 
-1. **PostgreSQL & Redis** — install locally or use Docker:
+| Safe in git | Never commit |
+|-------------|--------------|
+| `.env.example` | `.env` |
+| `.env.production.example` | Any file with real keys |
 
-   ```bash
-   docker run -d --name childcare-pg -e POSTGRES_PASSWORD=password -e POSTGRES_DB=childcare -p 5432:5432 postgres:16-alpine
-   docker run -d --name childcare-redis -p 6379:6379 redis:7-alpine
-   ```
+Real secrets live only in local `.env` files (gitignored):
 
-2. **Backend** — see [Backend API](#backend-api) quick start.
+- `Backend/.env`
+- `Agent/onboarding-agent-web/.env`
+- `House Owner App/house-owner-app/.env`
+- `Servant/servant-app/.env`
 
-3. **Coordinator portal** — see [Coordinator portal](#agent-onboarding-portal-web).
-
-4. **Mobile apps** — see respective sections. Point both apps at the same API URL.
-
-### Google Maps (all clients)
-
-Use the **same API key** on backend and both mobile apps, plus a **Map ID** from [Google Cloud Map Management](https://console.cloud.google.com/google/maps-apis):
+### Pre-commit secret check
 
 ```bash
-# Backend/.env
-GOOGLE_MAPS_API_KEY=your_key
-GOOGLE_MAP_ID=your_map_id
-
-# Both mobile app/.env
-EXPO_PUBLIC_GOOGLE_MAPS_API_KEY=your_key
-EXPO_PUBLIC_GOOGLE_MAP_ID=your_map_id
+node scripts/check-no-secrets.js   # Manual scan of staged files
+git config core.hooksPath .githooks   # Enable automatic check on commit
 ```
-
-Enable in Google Cloud Console: **Places API**, **Geocoding API**, **Maps SDK for Android**, **Maps SDK for iOS**. Restrict keys by API in production. After `.env` changes, restart the backend and run `npx expo start -c`.
-
-### Aadhaar KYC (optional)
-
-Download the UIDAI offline public key to `Backend/certs/` (see `Backend/certs/README.md`). Set `UIDAI_OFFLINE_CERT_PATH` in backend `.env`. When `REQUIRE_AADHAAR_VERIFICATION=true`, house owners only see servants with `aadhaarVerified=true`.
-
-### SMS / work-start OTP
-
-For development, set `SMS_PROVIDER=log` and `SMS_ALLOW_DEV_OTP=true` — OTP appears in API responses. For production in India, use `SMS_PROVIDER=msg91` with DLT template.
-
----
-
-## Environment variables
 
 ### Backend (`Backend/.env`)
 
 | Variable | Required | Description |
 |----------|----------|-------------|
 | `DATABASE_URL` | Yes | PostgreSQL connection string |
-| `JWT_SECRET` | Yes | Min 32 chars |
-| `JWT_REFRESH_SECRET` | Yes | Min 32 chars |
-| `REDIS_URL` | Yes | Redis for queues |
+| `JWT_SECRET` | Yes | Min 32 characters |
+| `JWT_REFRESH_SECRET` | Yes | Min 32 characters |
+| `REDIS_URL` | Yes | Redis URL |
 | `CLIENT_URL` | Dev | Comma-separated CORS origins |
 | `GOOGLE_MAPS_API_KEY` | Maps | Places, geocoding, static maps |
 | `GOOGLE_MAP_ID` | Optional | Styled map tiles |
 | `UPLOAD_DIR` | Optional | Default `uploads` |
 | `SMS_PROVIDER` | OTP | `log` \| `msg91` \| `twilio` |
+| `SMS_ALLOW_DEV_OTP` | Dev | `true` shows OTP in API when SMS is `log` |
 | `REQUIRE_AADHAAR_VERIFICATION` | Optional | Default `true` |
-| `SERVANT_AGENT_RADIUS_KM` | Optional | Coordinator proximity radius (default 3) |
+| `CAREGIVER_COORDINATOR_RADIUS_KM` | Optional | Default `3` |
+| `UIDAI_OFFLINE_CERT_PATH` | KYC | Path to UIDAI public cert |
 | `FCM_SERVER_KEY` | Optional | Push notifications |
 | `SMTP_*` | Optional | Email (password reset) |
+| `MSG91_*` | Prod SMS | MSG91 auth key + DLT template |
 
-See `Backend/.env.example` for the full list.
+Full list: `Backend/.env.example`
 
-### Coordinator portal (`Coordinator/onboarding-agent-web/.env`)
+### Coordinator portal (`Agent/onboarding-agent-web/.env`)
 
 | Variable | Description |
 |----------|-------------|
@@ -531,24 +547,50 @@ See `Backend/.env.example` for the full list.
 | `EXPO_PUBLIC_API_BASE_URL` | API URL including `/api/v1` |
 | `EXPO_PUBLIC_GOOGLE_MAPS_API_KEY` | Native map tiles |
 | `EXPO_PUBLIC_GOOGLE_MAP_ID` | Optional styled maps |
-| `EXPO_PUBLIC_USE_GOOGLE_MAP_ID` | Set `true` only when Map ID works on mobile SDKs |
+| `EXPO_PUBLIC_USE_GOOGLE_MAP_ID` | `true` only when Map ID works on mobile SDKs |
+
+### Google Maps setup
+
+Use the **same API key** on backend and both mobile apps:
+
+```bash
+# Backend/.env
+GOOGLE_MAPS_API_KEY=your_key
+GOOGLE_MAP_ID=your_map_id
+
+# Both mobile app/.env
+EXPO_PUBLIC_GOOGLE_MAPS_API_KEY=your_key
+EXPO_PUBLIC_GOOGLE_MAP_ID=your_map_id
+```
+
+Enable in Google Cloud Console: **Places API**, **Geocoding API**, **Maps SDK for Android**, **Maps SDK for iOS**. Restrict keys in production.
+
+### Aadhaar KYC
+
+Download UIDAI offline public key to `Backend/certs/` (see `Backend/certs/README.md`). When `REQUIRE_AADHAAR_VERIFICATION=true`, parents only see Aadhaar-verified caregivers in browse.
+
+### SMS / work-start OTP
+
+Development: `SMS_PROVIDER=log` and `SMS_ALLOW_DEV_OTP=true` — OTP appears in API responses.  
+Production (India): `SMS_PROVIDER=msg91` with DLT template; set `SMS_ALLOW_DEV_OTP=false`.
 
 ---
 
 ## Production deployment
 
-ChildCare runs as **five Docker containers**: PostgreSQL, Redis, API, marketing website, and agent portal. Containers bind to **localhost only** so your VPS nginx reverse-proxies alongside other apps.
+Five Docker services: PostgreSQL, Redis, API, marketing website, coordinator portal. Containers bind to **localhost**; host nginx reverse-proxies with SSL.
 
-### 1. Prepare the VPS
+### 1. Prepare VPS
 
 ```bash
-git clone <repo-url> childcare && cd childcare
+git clone https://github.com/CodefirstTechnology/HappyHands-Elders.git
+cd HappyHands-Elders
 cp .env.production.example .env
-# Edit .env: domains, JWT secrets, POSTGRES_PASSWORD, Google Maps, SMS, etc.
+# Edit .env: domains, JWT secrets, POSTGRES_PASSWORD, Maps, SMS
 bash deploy/scripts/deploy.sh
 ```
 
-Optional first-time seed:
+First-time seed:
 
 ```bash
 docker compose --env-file .env exec api node prisma/seed.js
@@ -556,74 +598,64 @@ docker compose --env-file .env exec api node prisma/seed.js
 
 ### 2. Host nginx
 
-Copy `deploy/nginx/childcare.conf` to `/etc/nginx/sites-available/`, replace `childcare.example.com` with your domains, adjust upstream ports if you changed `CHILDCARE_*_PORT` in `.env`, then enable and reload nginx.
+Copy `deploy/nginx/childcare.conf` to `/etc/nginx/sites-available/`, replace example domains, enable site, reload nginx. SSL via Let's Encrypt (`certbot` — instructions in nginx config).
 
-Default localhost upstream ports:
+### 3. Default upstream ports (localhost)
 
-| Service | Port |
-|---------|------|
-| API | 15000 |
-| Website | 15001 |
-| Coordinator portal | 15002 |
+| Service | Env variable | Default port |
+|---------|--------------|--------------|
+| API | `CHILDCARE_API_PORT` | 15000 |
+| Website | `CHILDCARE_WEBSITE_PORT` | 15001 |
+| Coordinator portal | `CHILDCARE_COORDINATOR_PORT` | 15002 |
 
-### 3. DNS records
+### 4. DNS
 
-| Host | Points to |
-|------|-----------|
+| Host | Service |
+|------|---------|
 | `childcare.example.com` | Marketing site |
 | `coordinator.childcare.example.com` | Coordinator portal |
-| `api.childcare.example.com` | Backend API + `/uploads` |
-
-### 4. Mobile production builds
-
-Before EAS/release builds:
-
-```bash
-EXPO_PUBLIC_API_BASE_URL=https://api.childcare.example.com/api/v1
-```
+| `api.childcare.example.com` | API + `/uploads` |
 
 ### Production checklist
 
 - [ ] Strong `JWT_SECRET` and `JWT_REFRESH_SECRET` (32+ chars)
 - [ ] `SMS_ALLOW_DEV_OTP=false`
 - [ ] `SMS_PROVIDER=msg91` (or Twilio) with DLT template
-- [ ] Google Maps API keys restricted by API + app package
-- [ ] `CLIENT_URL` lists only your real web origins
-- [ ] SSL via Let's Encrypt (`certbot` instructions in nginx config)
-- [ ] `uploads` Docker volume backed up
+- [ ] Google Maps keys restricted by API + app package
+- [ ] `CLIENT_URL` lists only real web origins
+- [ ] SSL via Let's Encrypt
+- [ ] Back up `uploads` Docker volume
+- [ ] No `.env` files committed to git
 
 ---
 
 ## Business rules
 
-- **Caregivers cannot self-register as verified** — primary onboarding is coordinator-only via `POST /api/v1/coordinator/caregivers`. Self-registration creates a `PENDING` profile for coordinator review.
-- **Browse lists only `VERIFIED` caregivers** — parents do not see pending or rejected profiles.
-- **Caregiver profiles** must include age range(s) served, max children, and CPR/first-aid certification flags.
-- **Parent profiles** include number of children, children ages, and special requirements.
-- **Browse filters** — parents can filter by age range served, certification, and max children.
-- **Aadhaar gate** — when `REQUIRE_AADHAAR_VERIFICATION=true`, only Aadhaar-verified caregivers appear in browse (configurable).
-- **Booking conflict checks** run inside Prisma transactions to prevent double-booking.
-- **Open area requests** require parent GPS; caregivers must cover the location via zones/skills to see the request.
-- **Care-start OTP** — SMS sent to the parent's registered mobile; caregiver must verify before care is marked active.
-- **Reviews** are allowed only after booking status is `COMPLETED`, and must include a **child safety rating** (1–5) plus overall rating.
-- **Coordinator service radius** — caregivers are routed to coordinators within `CAREGIVER_COORDINATOR_RADIUS_KM` (default 3 km; admin can set per coordinator).
+- Primary caregiver onboarding is **coordinator-only** via the portal. Self-registration creates a `PENDING` profile for review.
+- Browse lists only **`VERIFIED`** caregivers.
+- Caregiver profiles require age range served, max children, CPR/first-aid flags.
+- Parent profiles include children count, ages, special requirements.
+- **Aadhaar gate** — when enabled, only verified caregivers appear in browse.
+- Booking conflicts prevented inside Prisma transactions.
+- **Open area requests** require parent GPS; caregivers need matching zones/skills.
+- **Care-start OTP** — SMS to parent's mobile; caregiver verifies before `ACTIVE`.
+- **Reviews** only after `COMPLETED`; must include child safety rating (1–5).
+- Coordinators matched within `CAREGIVER_COORDINATOR_RADIUS_KM` (default 3 km).
 
 ---
 
 ## UI & design
 
-Design reference: `stitch_childcare_premium_service_app/` (see `premium_service_logic/DESIGN.md` if present).
-
-**Brand tokens** (shared across apps via `Stitch` theme):
+Shared **Stitch** theme tokens (`src/theme/stitch.ts` in each app):
 
 | Token | Value | Usage |
 |-------|-------|-------|
-| Primary | `#1B6CA8` | Trust blue — headers, healthcare trust |
-| Secondary | `#2CA58D` | Teal-green — growth, care |
+| Primary | `#1B6CA8` | Trust blue |
+| Secondary | `#2CA58D` | Teal-green |
 | CTA gradient | `#1B6CA8 → #2CA58D` | Primary buttons |
 | Surface | Warm off-white | Cards, backgrounds |
 
-**Patterns:** glass cards, ₹ pricing, verified badges, bilingual UI (EN / HI / MR) — tuned for Indian families seeking trusted childcare.
+Patterns: glass cards, ₹ pricing, verified badges, bilingual UI (EN / HI / MR).
 
 ---
 
@@ -631,12 +663,25 @@ Design reference: `stitch_childcare_premium_service_app/` (see `premium_service_
 
 | Issue | Fix |
 |-------|-----|
-| Port 5000 in use | `netstat -ano \| findstr :5000` then `taskkill /PID <pid> /F` (Windows) |
-| Mobile app can't reach API | Use LAN IP, same Wi‑Fi, firewall allows port 5000 |
-| Map tiles 403 | Check Map ID is enabled for Android/iOS SDKs; or unset `EXPO_PUBLIC_USE_GOOGLE_MAP_ID` |
-| Caregiver can't log in | Account must exist from agent portal first |
-| Upload images broken in agent portal | Set `VITE_API_BASE_URL` and ensure backend serves `/uploads` |
-| OTP not received | Use `SMS_PROVIDER=log` in dev; check MSG91/Twilio creds in prod |
+| Port 5000 in use | Windows: `netstat -ano \| findstr :5000` then `taskkill /PID <pid> /F` |
+| Mobile can't reach API | Use LAN IP, same Wi‑Fi, allow port 5000 in firewall |
+| Map tiles 403 | Check Map ID enabled for Android/iOS SDKs; or unset `EXPO_PUBLIC_USE_GOOGLE_MAP_ID` |
+| Caregiver can't log in | Account must exist from coordinator portal first |
+| Upload images broken in portal | Check `VITE_API_BASE_URL`; backend must serve `/uploads` |
+| OTP not received | Dev: `SMS_PROVIDER=log`; prod: check MSG91/Twilio creds |
+| Docker website build fails | Add `ChildCare_website/` or disable `website` service |
+
+---
+
+## Per-project READMEs
+
+| Project | README |
+|---------|--------|
+| Backend API | [`Backend/README.md`](Backend/README.md) |
+| Coordinator portal | [`Agent/onboarding-agent-web/README.md`](Agent/onboarding-agent-web/README.md) |
+| Parent app | [`House Owner App/house-owner-app/README.md`](House%20Owner%20App/house-owner-app/README.md) |
+| Caregiver app | [`Servant/servant-app/README.md`](Servant/servant-app/README.md) |
+| UIDAI certificates | [`Backend/certs/README.md`](Backend/certs/README.md) |
 
 ---
 
