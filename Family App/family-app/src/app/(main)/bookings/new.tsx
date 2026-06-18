@@ -49,7 +49,7 @@ export default function NewBookingScreen() {
   const [showDate, setShowDate] = useState(false);
 
   useEffect(() => {
-    const ho = user?.parent;
+    const ho = user?.familyClient;
     if (ho?.latitude != null && ho?.longitude != null && ho.address) {
       setLocation({
         address: ho.address,
@@ -68,7 +68,7 @@ export default function NewBookingScreen() {
         area: ho.area || '',
       });
     }
-  }, [user?.parent]);
+  }, [user?.familyClient]);
 
   const { data: servant } = useQuery({
     queryKey: ['caregiver', servantId],

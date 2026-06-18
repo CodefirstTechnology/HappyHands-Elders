@@ -1,7 +1,7 @@
 {
-  "name": "childcare-backend",
+  "name": "eldercare-backend",
   "version": "1.0.0",
-  "description": "ChildCare platform API — parents, caregivers, and coordinators",
+  "description": "ElderCare platform API — family clients, caregivers, and coordinators",
   "main": "index.js",
   "scripts": {
     "start": "node src/server.js",
@@ -10,7 +10,7 @@
     "seed:caregivers": "node prisma/seed-servants.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": ["childcare", "caregiver", "parent"],
+  "keywords": ["eldercare", "caregiver", "family-client"],
   "author": "",
   "license": "ISC",
   "dependencies": {

@@ -1,5 +1,5 @@
 {
-  "name": "childcare-caregiver-app",
+  "name": "eldercare-caregiver-app",
   "main": "expo-router/entry",
   "version": "1.0.0",
   "dependencies": {

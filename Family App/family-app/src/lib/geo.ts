@@ -27,13 +27,16 @@ export async function reverseGeocode(
   return res.data.data as GeoLocation;
 }
 
+export type MobilityLevel = 'independent' | 'assisted' | 'bedridden';
+
 export async function updateHomeLocation(
   payload: Partial<GeoLocation> & {
-    numberOfChildren?: number;
-    childrenAges?: number[];
-    specialRequirements?: string;
+    eldersCount?: number;
+    elderAgeRange?: string;
+    mobilityLevel?: MobilityLevel;
+    medicalNotes?: string;
   },
 ) {
   const res = await api.patch('/auth/me/location', payload);
-  return res.data.data as { user: unknown; parent: unknown };
+  return res.data.data as { user: unknown; familyClient: unknown };
 }

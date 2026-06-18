@@ -35,7 +35,7 @@ exports.getStats = async (req, res) => {
     monthBookings,
     monthRevenue
   ] = await Promise.all([
-    prisma.parent.count(),
+    prisma.familyClient.count(),
     prisma.coordinator.count(),
     prisma.caregiver.count(),
     prisma.caregiver.count({ where: { verificationStatus: "VERIFIED" } }),
@@ -130,7 +130,7 @@ exports.listUsers = async (req, res) => {
         isActive: true,
         createdAt: true,
         role: { select: { id: true, code: true, label: true } },
-        parent: { select: { city: true, address: true } }
+        familyClient: { select: { city: true, address: true } }
       },
       skip: (page - 1) * limit,
       take: limit,
@@ -159,7 +159,7 @@ exports.listBookings = async (req, res) => {
     prisma.booking.findMany({
       where,
       include: {
-        parent: { include: { user: { select: { name: true } } } },
+        familyClient: { include: { user: { select: { name: true } } } },
         caregiver: { include: { user: { select: { name: true } } } }
       },
       skip: (page - 1) * limit,

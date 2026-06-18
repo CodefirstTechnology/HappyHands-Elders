@@ -192,7 +192,7 @@ export default function AgentProfile() {
       <div>
         <h2 className="text-2xl font-bold text-primary">Your profile</h2>
         <p className="mt-1 text-sm text-on-surface-variant">
-          Account details and agency information for the ChildCare coordinator portal.
+          Account details and agency information for the ElderCare coordinator portal.
         </p>
       </div>
 

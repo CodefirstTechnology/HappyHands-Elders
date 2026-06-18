@@ -4,7 +4,7 @@ const geoController = require("../controllers/geoController");
 const { authenticate } = require("../middleware/auth");
 const asyncHandler = require("../utils/asyncHandler");
 
-// Public: used during sign-up before login (parent & caregiver registration)
+// Public: used during sign-up before login (family client & caregiver registration)
 router.get("/autocomplete", asyncHandler(geoController.autocomplete));
 router.get("/place-details", asyncHandler(geoController.placeDetails));
 router.get("/reverse", asyncHandler(geoController.reverseGeocode));

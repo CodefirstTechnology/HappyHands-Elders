@@ -34,6 +34,9 @@ const updateCaregiverMeSchema = z.object({
     weekOffDays: z.union([z.string(), z.array(z.string())]).optional(),
     hoursPerDay: optionalNumber(),
     availabilityNotes: z.string().optional(),
+    emergencyResponseCertified: z.coerce.boolean().optional(),
+    dementiaCareCertified: z.coerce.boolean().optional(),
+    fallCareCertified: z.coerce.boolean().optional(),
     ...bankDetailsFields
   })
 });
@@ -64,9 +67,10 @@ const createCaregiverSchema = z.object({
     longitude: z.coerce.number().min(-180).max(180).optional(),
     ageRangesServed: z.preprocess(parseAgeRanges, z.array(z.string()).optional()),
     maxChildren: optionalNumber(),
-    hasCprCert: z.coerce.boolean().optional(),
-    hasFirstAidCert: z.coerce.boolean().optional(),
-    childcareNote: z.string().optional(),
+    emergencyResponseCertified: z.coerce.boolean().optional(),
+    dementiaCareCertified: z.coerce.boolean().optional(),
+    fallCareCertified: z.coerce.boolean().optional(),
+    eldercareNote: z.string().optional(),
     ...bankDetailsFields
   })
 });
@@ -95,9 +99,10 @@ const updateCaregiverSchema = z.object({
     skills: z.union([z.string(), z.array(z.string())]).optional(),
     ageRangesServed: z.preprocess(parseAgeRanges, z.array(z.string()).optional()),
     maxChildren: optionalNumber(),
-    hasCprCert: z.coerce.boolean().optional(),
-    hasFirstAidCert: z.coerce.boolean().optional(),
-    childcareNote: z.string().optional(),
+    emergencyResponseCertified: z.coerce.boolean().optional(),
+    dementiaCareCertified: z.coerce.boolean().optional(),
+    fallCareCertified: z.coerce.boolean().optional(),
+    eldercareNote: z.string().optional(),
     ...bankDetailsFields
   })
 });

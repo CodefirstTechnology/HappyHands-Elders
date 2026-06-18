@@ -1,7 +1,7 @@
 {
   "common": {
-    "appName": "BabyCare",
-    "appNamePro": "ChildCare Pro",
+    "appName": "ElderCare",
+    "appNamePro": "ElderCare Pro",
     "loading": "लोड होत आहे…",
     "saving": "सेव्ह होत आहे…",
     "save": "सेव्ह करा",
@@ -67,7 +67,7 @@
     "loginFailed": "लॉगिन अयशस्वी",
     "tryAgain": "कृपया पुन्हा प्रयत्न करा",
     "wrongRole": "हे house owner खाते नाही. Servant किंवा Agent अॅप वापरा.",
-    "joinTitle": "ChildCare मध्ये सामील व्हा",
+    "joinTitle": "ElderCare मध्ये सामील व्हा",
     "joinSubtitle": "घरासाठी सत्यापित मदत बुक करा",
     "fullName": "पूर्ण नाव",
     "phone": "फोन (+91)",
@@ -85,7 +85,7 @@
     "servantJoinSubtitle": "सहाय्यक म्हणून अर्ज करण्यासाठी माहिती पाठवा.",
     "register": "नोंदणी करा",
     "registrationAgentContact": "एजंट लवकर संपर्क साधेल. तपासणीनंतर पासवर्ड मिळेल — मग खाली साइन इन करा.",
-    "registrationSuccessBody": "तुमचा अर्ज सादर झाला. ChildCare एजंट संपर्क साधेल, तपशील तपासेल आणि लॉगिन माहिती देईल.",
+    "registrationSuccessBody": "तुमचा अर्ज सादर झाला. ElderCare एजंट संपर्क साधेल, तपशील तपासेल आणि लॉगिन माहिती देईल.",
     "registrationEmailNote": "तुमचा ईमेल जतन केला: {{email}}",
     "goToSignIn": "साइन इन वर जा",
     "addressManual": "पत्ता (टाइप किंवा संपादन)",

@@ -1,0 +1,25 @@
+{
+  "folders": [
+    {
+      "name": "HappyHands Elders",
+      "path": "."
+    },
+    {
+      "name": "Family App",
+      "path": "Family App/family-app"
+    },
+    {
+      "name": "Caregiver App",
+      "path": "Caregiver App/caregiver-app"
+    },
+    {
+      "name": "Coordinator Portal",
+      "path": "Agent/onboarding-agent-web"
+    },
+    {
+      "name": "Backend",
+      "path": "Backend"
+    }
+  ],
+  "settings": {}
+}

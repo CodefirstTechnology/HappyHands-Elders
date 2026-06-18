@@ -10,7 +10,7 @@ type User = {
   email: string;
   role: string;
   preferredLanguage?: string;
-  parent?: {
+  familyClient?: {
     id: number;
     city?: string;
     address?: string;
@@ -19,9 +19,10 @@ type User = {
     area?: string;
     latitude?: number;
     longitude?: number;
-    numberOfChildren?: number;
-    childrenAges?: number[];
-    specialRequirements?: string;
+    eldersCount?: number;
+    elderAgeRange?: string;
+    mobilityLevel?: string;
+    medicalNotes?: string;
   };
 };
 
@@ -65,7 +66,8 @@ export const useAuthStore = create<AuthState>((set) => ({
       email: email.trim().toLowerCase(),
       password,
     });
-    if (data.data.user.role !== 'PARENT') {
+    const role = data.data.user.role;
+    if (role !== 'FAMILY_CLIENT' && role !== 'PARENT') {
       throw {
         response: {
           data: {

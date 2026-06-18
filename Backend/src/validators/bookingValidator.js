@@ -69,7 +69,7 @@ const createBookingSchema = z.object({
 const reviewSchema = z.object({
   body: z.object({
     rating: z.coerce.number().min(1).max(5),
-    childSafetyRating: z.coerce.number().int().min(1).max(5).optional(),
+    elderSafetyRating: z.coerce.number().int().min(1).max(5).optional(),
     comment: z.string().optional()
   })
 });

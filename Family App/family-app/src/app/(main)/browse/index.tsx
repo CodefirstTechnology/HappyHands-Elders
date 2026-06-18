@@ -22,7 +22,7 @@ import { localizedSkillLabel } from '@/lib/skills';
 import { useLiveLocation } from '@/hooks/useLiveLocation';
 import { useAuthStore } from '@/store/authStore';
 import type { LocationValue } from '@/lib/locationTypes';
-import { BABY_AGE_RANGES } from '@/constants/babyCare';
+import { ELDER_AGE_RANGES } from '@/constants/elderCare';
 
 export default function BrowseScreen() {
   const { t } = useTranslation();
@@ -35,8 +35,9 @@ export default function BrowseScreen() {
   const [zone, setZone] = useState('');
   const [ageRange, setAgeRange] = useState('');
   const [maxChildren, setMaxChildren] = useState('');
-  const [cprCert, setCprCert] = useState(false);
-  const [firstAidCert, setFirstAidCert] = useState(false);
+  const [emergencyResponseCert, setEmergencyResponseCert] = useState(false);
+  const [dementiaCareCert, setDementiaCareCert] = useState(false);
+  const [fallCareCert, setFallCareCert] = useState(false);
   const skillCodes = skills.map((s) => s.code);
 
   const searchLocation = useMemo<LocationValue | null>(() => {
@@ -48,22 +49,22 @@ export default function BrowseScreen() {
     ) {
       return liveLocation;
     }
-    const ho = user?.parent;
+    const fc = user?.familyClient;
     if (
-      ho?.latitude != null &&
-      ho?.longitude != null &&
-      !Number.isNaN(ho.latitude) &&
-      !Number.isNaN(ho.longitude)
+      fc?.latitude != null &&
+      fc?.longitude != null &&
+      !Number.isNaN(fc.latitude) &&
+      !Number.isNaN(fc.longitude)
     ) {
       return {
-        address: ho.address || ho.city || t('common.savedHome'),
-        city: ho.city,
-        latitude: ho.latitude,
-        longitude: ho.longitude,
+        address: fc.address || fc.city || t('common.savedHome'),
+        city: fc.city,
+        latitude: fc.latitude,
+        longitude: fc.longitude,
       };
     }
     return null;
-  }, [liveLocation, user?.parent]);
+  }, [liveLocation, user?.familyClient]);
 
   useEffect(() => {
     const raw = Array.isArray(skillParam) ? skillParam[0] : skillParam;
@@ -74,7 +75,7 @@ export default function BrowseScreen() {
   }, [skillParam, skillCodes.join(',')]);
 
   const { data, isLoading, refetch } = useQuery({
-    queryKey: ['caregivers', skill, city, zone, ageRange, maxChildren, cprCert, firstAidCert, searchLocation?.latitude, searchLocation?.longitude],
+    queryKey: ['caregivers', skill, city, zone, ageRange, maxChildren, emergencyResponseCert, dementiaCareCert, fallCareCert, searchLocation?.latitude, searchLocation?.longitude],
     enabled: !locLoading && !!searchLocation,
     queryFn: async () => {
       const params: Record<string, string | number | boolean> = {
@@ -83,8 +84,9 @@ export default function BrowseScreen() {
         zone: zone || undefined,
         ageRange: ageRange || undefined,
         maxChildren: maxChildren ? Number(maxChildren) : undefined,
-        hasCprCert: cprCert ? 'true' : undefined,
-        hasFirstAidCert: firstAidCert ? 'true' : undefined,
+        emergencyResponseCertified: emergencyResponseCert ? 'true' : undefined,
+        dementiaCareCertified: dementiaCareCert ? 'true' : undefined,
+        fallCareCertified: fallCareCert ? 'true' : undefined,
         latitude: searchLocation!.latitude,
         longitude: searchLocation!.longitude,
       } as Record<string, string | number | boolean>;
@@ -208,7 +210,7 @@ export default function BrowseScreen() {
       <View style={styles.chipsSection}>
         <Text style={styles.chipsLabel}>{t('browse.ageRange')}</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipsRow} contentContainerStyle={styles.chipsContent}>
-          {BABY_AGE_RANGES.map(({ value, label }) => {
+          {ELDER_AGE_RANGES.map(({ value, label }) => {
             const selected = ageRange === value;
             return (
               <TouchableOpacity
@@ -223,7 +225,7 @@ export default function BrowseScreen() {
         </ScrollView>
       </View>
       <View style={styles.searchWrap}>
-        <MaterialIcons name="child-care" size={20} color={Stitch.colors.onSurfaceVariant} />
+        <MaterialIcons name="elderly" size={20} color={Stitch.colors.onSurfaceVariant} />
         <TextInput
           style={styles.search}
           placeholder={t('browse.maxChildrenPlaceholder')}
@@ -234,11 +236,29 @@ export default function BrowseScreen() {
         />
       </View>
       <View style={styles.certRow}>
-        <TouchableOpacity style={[styles.certChip, cprCert && styles.certChipOn]} onPress={() => setCprCert(!cprCert)}>
-          <Text style={[styles.certText, cprCert && styles.certTextOn]}>{t('browse.cprCertified')}</Text>
+        <TouchableOpacity
+          style={[styles.certChip, emergencyResponseCert && styles.certChipOn]}
+          onPress={() => setEmergencyResponseCert(!emergencyResponseCert)}
+        >
+          <Text style={[styles.certText, emergencyResponseCert && styles.certTextOn]}>
+            {t('browse.emergencyResponseCertified')}
+          </Text>
         </TouchableOpacity>
-        <TouchableOpacity style={[styles.certChip, firstAidCert && styles.certChipOn]} onPress={() => setFirstAidCert(!firstAidCert)}>
-          <Text style={[styles.certText, firstAidCert && styles.certTextOn]}>{t('browse.firstAidCertified')}</Text>
+        <TouchableOpacity
+          style={[styles.certChip, dementiaCareCert && styles.certChipOn]}
+          onPress={() => setDementiaCareCert(!dementiaCareCert)}
+        >
+          <Text style={[styles.certText, dementiaCareCert && styles.certTextOn]}>
+            {t('browse.dementiaCareCertified')}
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.certChip, fallCareCert && styles.certChipOn]}
+          onPress={() => setFallCareCert(!fallCareCert)}
+        >
+          <Text style={[styles.certText, fallCareCert && styles.certTextOn]}>
+            {t('browse.fallCareCertified')}
+          </Text>
         </TouchableOpacity>
       </View>
       <View style={styles.chipsSection}>

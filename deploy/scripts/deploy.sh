@@ -11,7 +11,7 @@ if [[ ! -f "$ENV_FILE" ]]; then
   exit 1
 fi
 
-echo "Building and starting ChildCare stack..."
+echo "Building and starting ElderCare stack..."
 docker compose --env-file "$ENV_FILE" up -d --build
 
 echo "Waiting for API health..."

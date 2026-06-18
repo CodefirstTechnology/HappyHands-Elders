@@ -23,12 +23,11 @@ import {
 
 const DAYS = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN']
 
-const BABY_AGE_RANGES = [
-  { value: '0-3m', label: '0–3 months' },
-  { value: '3-6m', label: '3–6 months' },
-  { value: '6-12m', label: '6–12 months' },
-  { value: '12-24m', label: '12–24 months' },
-  { value: '24-36m', label: '2–3 years' },
+const ELDER_AGE_RANGES = [
+  { value: '60-70', label: '60–70 years' },
+  { value: '70-80', label: '70–80 years' },
+  { value: '80-90', label: '80–90 years' },
+  { value: '90+', label: '90+ years' },
 ]
 
 const STEPS = [
@@ -123,9 +122,10 @@ export default function OnboardServant() {
     offersMonthly: true,
     ageRangesServed: [],
     maxChildren: '',
-    hasCprCert: false,
-    hasFirstAidCert: false,
-    childcareNote: '',
+    emergencyResponseCertified: false,
+    dementiaCareCertified: false,
+    fallCareCertified: false,
+    eldercareNote: '',
     skills: [],
     address: '',
     idProofType: 'AADHAR',
@@ -402,9 +402,9 @@ export default function OnboardServant() {
               className={inputClassName()}
             />
           </Field>
-          <Field label="Baby age ranges served">
+          <Field label="Elder age ranges served">
             <div className="flex flex-wrap gap-2">
-              {BABY_AGE_RANGES.map(({ value, label }) => (
+              {ELDER_AGE_RANGES.map(({ value, label }) => (
                 <button
                   key={value}
                   type="button"
@@ -420,7 +420,7 @@ export default function OnboardServant() {
               ))}
             </div>
           </Field>
-          <Field label="Max babies at once">
+          <Field label="Max elders at once">
             <input
               placeholder="e.g. 2"
               type="number"
@@ -434,25 +434,33 @@ export default function OnboardServant() {
             <label className="flex items-center gap-2 text-sm">
               <input
                 type="checkbox"
-                checked={form.hasCprCert}
-                onChange={(e) => update('hasCprCert', e.target.checked)}
+                checked={form.emergencyResponseCertified}
+                onChange={(e) => update('emergencyResponseCertified', e.target.checked)}
               />
-              CPR certified
+              Emergency response certified
             </label>
             <label className="flex items-center gap-2 text-sm">
               <input
                 type="checkbox"
-                checked={form.hasFirstAidCert}
-                onChange={(e) => update('hasFirstAidCert', e.target.checked)}
+                checked={form.dementiaCareCertified}
+                onChange={(e) => update('dementiaCareCertified', e.target.checked)}
               />
-              First aid certified
+              Dementia care certified
+            </label>
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={form.fallCareCertified}
+                onChange={(e) => update('fallCareCertified', e.target.checked)}
+              />
+              Fall care certified
             </label>
           </div>
-          <Field label="Childcare notes">
+          <Field label="Elder care notes">
             <textarea
-              placeholder="Experience with infants, special needs, languages spoken…"
-              value={form.childcareNote}
-              onChange={(e) => update('childcareNote', e.target.value)}
+              placeholder="Experience with dementia, mobility support, languages spoken…"
+              value={form.eldercareNote}
+              onChange={(e) => update('eldercareNote', e.target.value)}
               className={inputClassName()}
               rows={3}
             />

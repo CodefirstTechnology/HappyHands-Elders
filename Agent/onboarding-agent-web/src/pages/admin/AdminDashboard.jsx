@@ -42,7 +42,7 @@ export default function AdminDashboard() {
   if (isLoading) return <p>Loading…</p>
 
   const cards = [
-    { label: 'Total Parents', value: stats.totalParents },
+    { label: 'Total Family Clients', value: stats.totalParents },
     { label: 'Coordinators', value: stats.totalCoordinators },
     { label: 'Total Caregivers', value: stats.totalCaregivers },
     { label: 'Verified Caregivers', value: stats.verifiedCaregivers },
@@ -147,7 +147,7 @@ export default function AdminDashboard() {
           <tbody>
             {(bookings || []).map((b) => (
               <tr key={b.id} className="border-b">
-                <td className="py-2">{b.parent?.user?.name}</td>
+                <td className="py-2">{b.familyClient?.user?.name || b.parent?.user?.name}</td>
                 <td>{b.caregiver?.user?.name}</td>
                 <td>{b.bookingType}</td>
                 <td>

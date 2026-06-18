@@ -111,7 +111,7 @@ export default function AdminBookings() {
                       Booking #{b.id}
                     </p>
                     <p className="mt-1 font-semibold text-primary">
-                      {b.parent?.user?.name || 'Unknown owner'}
+                      {b.familyClient?.user?.name || b.parent?.user?.name || 'Unknown family client'}
                     </p>
                   </div>
                   <Badge status={b.status} />
@@ -142,9 +142,9 @@ export default function AdminBookings() {
                 </td>
                 <td className="px-4 py-4">
                   <div className="flex items-center gap-2">
-                    <Avatar name={b.parent?.user?.name} variant="soft" />
+                    <Avatar name={b.familyClient?.user?.name || b.parent?.user?.name} variant="soft" />
                     <span className="font-medium">
-                      {b.parent?.user?.name || '—'}
+                      {b.familyClient?.user?.name || b.parent?.user?.name || '—'}
                     </span>
                   </div>
                 </td>

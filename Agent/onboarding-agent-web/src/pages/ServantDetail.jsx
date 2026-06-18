@@ -478,7 +478,7 @@ export default function ServantDetail() {
                           })}
                         </td>
                         <td className="px-4 py-3">
-                          {b.parent?.user?.name || '—'}
+                          {b.familyClient?.user?.name || b.parent?.user?.name || '—'}
                         </td>
                         <td className="px-4 py-3 capitalize text-on-surface-variant">
                           {b.bookingType?.toLowerCase()}

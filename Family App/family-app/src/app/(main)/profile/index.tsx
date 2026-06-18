@@ -23,8 +23,9 @@ import {
   AddressUnitFields,
   type AddressUnitValue,
 } from '@/components/ui/AddressUnitFields';
-import { updateHomeLocation } from '@/lib/geo';
+import { updateHomeLocation, type MobilityLevel } from '@/lib/geo';
 import { mapsDeepLink, type LocationValue } from '@/lib/locationTypes';
+import { MOBILITY_LEVELS } from '@/constants/elderCare';
 
 export default function ProfileScreen() {
   const { t } = useTranslation();
@@ -36,34 +37,36 @@ export default function ProfileScreen() {
     area: '',
   });
   const [saving, setSaving] = useState(false);
-  const [numberOfChildren, setNumberOfChildren] = useState('');
-  const [childrenAges, setChildrenAges] = useState('');
-  const [specialRequirements, setSpecialRequirements] = useState('');
+  const [eldersCount, setEldersCount] = useState('');
+  const [elderAgeRange, setElderAgeRange] = useState('');
+  const [mobilityLevel, setMobilityLevel] = useState<MobilityLevel | ''>('');
+  const [medicalNotes, setMedicalNotes] = useState('');
 
   useEffect(() => {
-    const ho = user?.parent;
-    if (ho?.latitude != null && ho?.longitude != null && ho.address) {
+    const fc = user?.familyClient;
+    if (fc?.latitude != null && fc?.longitude != null && fc.address) {
       setLocation({
-        address: ho.address,
-        city: ho.city,
-        latitude: ho.latitude,
-        longitude: ho.longitude,
-        flatNo: ho.flatNo,
-        building: ho.building,
-        area: ho.area,
+        address: fc.address,
+        city: fc.city,
+        latitude: fc.latitude,
+        longitude: fc.longitude,
+        flatNo: fc.flatNo,
+        building: fc.building,
+        area: fc.area,
       });
     }
-    if (ho) {
+    if (fc) {
       setAddressUnit({
-        flatNo: ho.flatNo || '',
-        building: ho.building || '',
-        area: ho.area || '',
+        flatNo: fc.flatNo || '',
+        building: fc.building || '',
+        area: fc.area || '',
       });
-      setNumberOfChildren(ho.numberOfChildren != null ? String(ho.numberOfChildren) : '');
-      setChildrenAges(ho.childrenAges?.length ? ho.childrenAges.join(', ') : '');
-      setSpecialRequirements(ho.specialRequirements || '');
+      setEldersCount(fc.eldersCount != null ? String(fc.eldersCount) : '');
+      setElderAgeRange(fc.elderAgeRange || '');
+      setMobilityLevel((fc.mobilityLevel as MobilityLevel) || '');
+      setMedicalNotes(fc.medicalNotes || '');
     }
-  }, [user?.parent]);
+  }, [user?.familyClient]);
 
   const saveLocation = async () => {
     if (!location) {
@@ -72,10 +75,6 @@ export default function ProfileScreen() {
     }
     setSaving(true);
     try {
-      const ages = childrenAges
-        .split(',')
-        .map((s) => parseInt(s.trim(), 10))
-        .filter((n) => !Number.isNaN(n));
       const { user: updatedUser } = await updateHomeLocation({
         address: location.address,
         flatNo: addressUnit.flatNo.trim() || undefined,
@@ -84,9 +83,10 @@ export default function ProfileScreen() {
         city: location.city || undefined,
         latitude: location.latitude,
         longitude: location.longitude,
-        numberOfChildren: numberOfChildren ? Number(numberOfChildren) : undefined,
-        childrenAges: ages.length ? ages : undefined,
-        specialRequirements: specialRequirements.trim() || undefined,
+        eldersCount: eldersCount ? Number(eldersCount) : undefined,
+        elderAgeRange: elderAgeRange.trim() || undefined,
+        mobilityLevel: mobilityLevel || undefined,
+        medicalNotes: medicalNotes.trim() || undefined,
       });
       setUser(updatedUser as typeof user);
       Alert.alert(t('success.saved'), t('success.homeLocationUpdated'));
@@ -111,7 +111,7 @@ export default function ProfileScreen() {
   };
 
   const initial = user?.name?.trim()?.[0]?.toUpperCase() || '?';
-  const displayCity = user?.parent?.city || location?.city;
+  const displayCity = user?.familyClient?.city || location?.city;
 
   return (
     <ScrollView style={styles.root} contentContainerStyle={styles.scroll}>
@@ -132,10 +132,10 @@ export default function ProfileScreen() {
           </View>
         </View>
         <Text style={styles.heroName} numberOfLines={2}>
-          {user?.name || t('profile.parent')}
+          {user?.name || t('profile.familyClient')}
         </Text>
         <View style={styles.rolePill}>
-          <Text style={styles.roleText}>{t('profile.parent')}</Text>
+          <Text style={styles.roleText}>{t('profile.familyClient')}</Text>
         </View>
         <View style={styles.metaRow}>
           <MaterialIcons name="mail-outline" size={16} color="rgba(255,255,255,0.85)" />
@@ -158,31 +158,48 @@ export default function ProfileScreen() {
       <GlassCard style={styles.locationCard}>
         <View style={styles.sectionHead}>
           <View style={styles.sectionIcon}>
-            <MaterialIcons name="family-restroom" size={22} color={Stitch.colors.secondary} />
+            <MaterialIcons name="elderly" size={22} color={Stitch.colors.secondary} />
           </View>
           <View style={styles.sectionHeadText}>
-            <Text style={styles.sectionTitle}>{t('profile.childrenInfo')}</Text>
-            <Text style={styles.sectionSub}>{t('profile.childrenInfoSub')}</Text>
+            <Text style={styles.sectionTitle}>{t('profile.eldersInfo')}</Text>
+            <Text style={styles.sectionSub}>{t('profile.eldersInfoSub')}</Text>
           </View>
         </View>
         <GhostInput
-          label={t('profile.numberOfChildren')}
-          value={numberOfChildren}
-          onChangeText={setNumberOfChildren}
+          label={t('profile.eldersCount')}
+          value={eldersCount}
+          onChangeText={setEldersCount}
           keyboardType="number-pad"
         />
         <GhostInput
-          label={t('profile.childrenAges')}
-          value={childrenAges}
-          onChangeText={setChildrenAges}
-          placeholder={t('profile.childrenAgesPlaceholder')}
+          label={t('profile.elderAgeRange')}
+          value={elderAgeRange}
+          onChangeText={setElderAgeRange}
+          placeholder={t('profile.elderAgeRangePlaceholder')}
         />
-        <Text style={styles.hint}>{t('profile.childrenAgesHint')}</Text>
+        <Text style={styles.hint}>{t('profile.elderAgeRangeHint')}</Text>
+        <Text style={styles.fieldLabel}>{t('profile.mobilityLevel')}</Text>
+        <View style={styles.mobilityRow}>
+          {MOBILITY_LEVELS.map(({ value, labelKey }) => {
+            const selected = mobilityLevel === value;
+            return (
+              <TouchableOpacity
+                key={value}
+                style={[styles.mobilityChip, selected && styles.mobilityChipOn]}
+                onPress={() => setMobilityLevel(selected ? '' : (value as MobilityLevel))}
+              >
+                <Text style={[styles.mobilityChipText, selected && styles.mobilityChipTextOn]}>
+                  {t(labelKey)}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
         <GhostInput
-          label={t('profile.specialRequirements')}
-          value={specialRequirements}
-          onChangeText={setSpecialRequirements}
-          placeholder={t('profile.specialRequirementsPlaceholder')}
+          label={t('profile.medicalNotes')}
+          value={medicalNotes}
+          onChangeText={setMedicalNotes}
+          placeholder={t('profile.medicalNotesPlaceholder')}
           multiline
         />
       </GlassCard>
@@ -336,6 +353,27 @@ const styles = StyleSheet.create({
     marginTop: 4,
     lineHeight: 18,
   },
+  fieldLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: Stitch.colors.onBackground,
+    marginBottom: 8,
+  },
+  mobilityRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 16,
+  },
+  mobilityChip: {
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: Stitch.radius.pill,
+    backgroundColor: Stitch.colors.surfaceContainer,
+  },
+  mobilityChipOn: { backgroundColor: Stitch.colors.secondary },
+  mobilityChipText: { fontSize: 13, fontWeight: '600', color: Stitch.colors.onSurfaceVariant },
+  mobilityChipTextOn: { color: '#fff' },
   hint: {
     fontSize: 12,
     color: Stitch.colors.onSurfaceVariant,

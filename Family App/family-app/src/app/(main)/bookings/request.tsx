@@ -73,14 +73,14 @@ export default function AreaBookingRequestScreen() {
   }, [liveLocation]);
 
   useEffect(() => {
-    const ho = user?.parent;
+    const ho = user?.familyClient;
     if (!ho) return;
     setAddressUnit({
       flatNo: ho.flatNo || '',
       building: ho.building || '',
       area: ho.area || '',
     });
-  }, [user?.parent]);
+  }, [user?.familyClient]);
 
   useEffect(() => {
     const syncSlots = () =>

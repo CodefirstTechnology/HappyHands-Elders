@@ -28,20 +28,11 @@ const parseSkillsBody = (val) => {
   return [];
 };
 
-const parseChildrenAges = (val) => {
-  if (Array.isArray(val)) return val.map(Number).filter((n) => Number.isFinite(n));
-  if (typeof val === "string") {
-    try {
-      const parsed = JSON.parse(val);
-      if (Array.isArray(parsed)) return parsed.map(Number).filter((n) => Number.isFinite(n));
-    } catch {
-      return val
-        .split(",")
-        .map((s) => Number(s.trim()))
-        .filter((n) => Number.isFinite(n));
-    }
-  }
-  return [];
+const parseElderAgeRange = (val) => {
+  if (val === undefined || val === null || val === "") return undefined;
+  if (typeof val === "string") return val.trim().slice(0, 50);
+  if (Array.isArray(val)) return val.join(", ").slice(0, 50);
+  return String(val).slice(0, 50);
 };
 
 const registerCaregiverSchema = z.object({
@@ -75,9 +66,10 @@ const registerParentSchema = z.object({
     latitude: z.coerce.number().min(-90).max(90).optional(),
     longitude: z.coerce.number().min(-180).max(180).optional(),
     preferredLanguage: z.enum(SUPPORTED_LANGUAGES).optional(),
-    numberOfChildren: z.coerce.number().int().min(1).optional(),
-    childrenAges: z.preprocess(parseChildrenAges, z.array(z.number().int().min(0)).optional()),
-    specialRequirements: z.preprocess(emptyToUndefined, z.string().optional())
+    eldersCount: z.coerce.number().int().min(1).optional(),
+    elderAgeRange: z.preprocess(parseElderAgeRange, z.string().max(50).optional()),
+    mobilityLevel: z.enum(["independent", "assisted", "bedridden"]).optional(),
+    medicalNotes: z.preprocess(emptyToUndefined, z.string().optional())
   })
 });
 
@@ -115,7 +107,11 @@ const updateLocationSchema = z.object({
     area: z.preprocess(emptyToUndefined, z.string().optional()),
     city: z.preprocess(emptyToUndefined, z.string().optional()),
     latitude: z.coerce.number().min(-90).max(90).optional(),
-    longitude: z.coerce.number().min(-180).max(180).optional()
+    longitude: z.coerce.number().min(-180).max(180).optional(),
+    eldersCount: z.coerce.number().int().min(1).optional(),
+    elderAgeRange: z.preprocess(parseElderAgeRange, z.string().max(50).optional()),
+    mobilityLevel: z.enum(["independent", "assisted", "bedridden"]).optional(),
+    medicalNotes: z.preprocess(emptyToUndefined, z.string().optional())
   })
 });
 

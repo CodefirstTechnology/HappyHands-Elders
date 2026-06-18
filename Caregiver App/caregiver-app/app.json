@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "BabyCare for Nannies",
-    "slug": "childcare-caregiver-app",
+    "name": "ElderCare for Caregivers",
+    "slug": "eldercare-caregiver-app",
     "owner": "pravinbehere45",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -9,11 +9,11 @@
     "scheme": "servantapp",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "bundleIdentifier": "com.childcare.caregiverapp",
+      "bundleIdentifier": "com.eldercare.caregiverapp",
       "icon": "./assets/expo.icon"
     },
     "android": {
-      "package": "com.childcare.caregiverapp",
+      "package": "com.eldercare.caregiverapp",
       "permissions": [
         "ACCESS_COARSE_LOCATION",
         "ACCESS_FINE_LOCATION",

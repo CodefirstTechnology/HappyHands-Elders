@@ -46,9 +46,9 @@ exports.clockIn = async (req, res) => {
   if (booking.status === "CONFIRMED") {
     const pending = await hasPendingWorkOtp(bookingId);
     if (pending) {
-      throw new ApiError(400, "Enter the 4-digit care-start OTP from the parent to start work");
+      throw new ApiError(400, "Enter the 4-digit care-start OTP from the family client to start work");
     }
-    throw new ApiError(400, "Tap I arrived to get a care-start OTP from the parent first");
+    throw new ApiError(400, "Tap I arrived to get a care-start OTP from the family client first");
   }
 
   const openEntry = await prisma.timeEntry.findFirst({
@@ -79,8 +79,8 @@ exports.clockIn = async (req, res) => {
     return e;
   });
 
-  const owner = await prisma.parent.findUnique({
-    where: { id: booking.parentId },
+  const owner = await prisma.familyClient.findUnique({
+    where: { id: booking.familyClientId },
     select: { userId: true }
   });
   if (owner?.userId) {

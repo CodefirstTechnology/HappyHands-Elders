@@ -1,28 +1,28 @@
-# ChildCare production stack — bind ports to localhost for host nginx reverse proxy.
+# ElderCare production stack — bind ports to localhost for host nginx reverse proxy.
 # Usage:
 #   cp .env.production.example .env
 #   docker compose --env-file .env up -d --build
 
-name: childcare
+name: eldercare
 
 services:
   postgres:
     image: postgres:16-alpine
     restart: unless-stopped
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-childcare}
+      POSTGRES_USER: ${POSTGRES_USER:-eldercare}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
-      POSTGRES_DB: ${POSTGRES_DB:-childcare}
+      POSTGRES_DB: ${POSTGRES_DB:-Eldercare_db}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-childcare} -d ${POSTGRES_DB:-childcare}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-eldercare} -d ${POSTGRES_DB:-Eldercare_db}"]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 20s
     networks:
-      - childcare
+      - eldercare
 
   redis:
     image: redis:7-alpine
@@ -36,7 +36,7 @@ services:
       timeout: 3s
       retries: 5
     networks:
-      - childcare
+      - eldercare
 
   api:
     build:
@@ -52,7 +52,7 @@ services:
       NODE_ENV: production
       PORT: 5000
       TRUST_PROXY: "true"
-      DATABASE_URL: ${DATABASE_URL:-postgresql://${POSTGRES_USER:-childcare}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-childcare}}
+      DATABASE_URL: ${DATABASE_URL:-postgresql://${POSTGRES_USER:-eldercare}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-Eldercare_db}}
       REDIS_URL: redis://redis:6379
       JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-15m}
@@ -72,7 +72,7 @@ services:
       SMS_PROVIDER: ${SMS_PROVIDER:-log}
       SMS_DEFAULT_COUNTRY_CODE: ${SMS_DEFAULT_COUNTRY_CODE:-91}
       MSG91_AUTH_KEY: ${MSG91_AUTH_KEY:-}
-      MSG91_SENDER_ID: ${MSG91_SENDER_ID:-CHLDRA}
+      MSG91_SENDER_ID: ${MSG91_SENDER_ID:-ELDRCA}
       MSG91_ROUTE: ${MSG91_ROUTE:-4}
       MSG91_TEMPLATE_ID_CARE_OTP: ${MSG91_TEMPLATE_ID_CARE_OTP:-}
       TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID:-}
@@ -84,9 +84,9 @@ services:
     volumes:
       - uploads_data:/app/uploads
     ports:
-      - "127.0.0.1:${CHILDCARE_API_PORT:-15000}:5000"
+      - "127.0.0.1:${ELDERCARE_API_PORT:-15000}:5000"
     networks:
-      - childcare
+      - eldercare
 
   website:
     build:
@@ -102,9 +102,9 @@ services:
         VITE_APP_STORE_CAREGIVER: ${VITE_APP_STORE_CAREGIVER:-#}
     restart: unless-stopped
     ports:
-      - "127.0.0.1:${CHILDCARE_WEBSITE_PORT:-15001}:80"
+      - "127.0.0.1:${ELDERCARE_WEBSITE_PORT:-15001}:80"
     networks:
-      - childcare
+      - eldercare
 
   coordinator-portal:
     build:
@@ -117,12 +117,12 @@ services:
     depends_on:
       - api
     ports:
-      - "127.0.0.1:${CHILDCARE_COORDINATOR_PORT:-15002}:80"
+      - "127.0.0.1:${ELDERCARE_COORDINATOR_PORT:-15002}:80"
     networks:
-      - childcare
+      - eldercare
 
 networks:
-  childcare:
+  eldercare:
     driver: bridge
 
 volumes:

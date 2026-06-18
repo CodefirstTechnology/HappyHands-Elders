@@ -1,7 +1,7 @@
 {
   "common": {
-    "appName": "BabyCare",
-    "appNamePro": "ChildCare",
+    "appName": "ElderCare",
+    "appNamePro": "ElderCare",
     "loading": "लोड हो रहा है…",
     "saving": "सेव हो रहा है…",
     "save": "सेव करें",
@@ -67,7 +67,7 @@
     "loginFailed": "लॉगिन विफल",
     "tryAgain": "कृपया पुनः प्रयास करें",
     "wrongRole": "यह खाता house owner का नहीं है। Servant या Agent ऐप उपयोग करें।",
-    "joinTitle": "ChildCare में शामिल हों",
+    "joinTitle": "ElderCare में शामिल हों",
     "joinSubtitle": "अपने घर के लिए सत्यापित सहायता बुक करें",
     "fullName": "पूरा नाम",
     "phone": "फ़ोन (+91)",
@@ -321,8 +321,8 @@
   },
   "profile": {
     "title": "प्रोफ़ाइल",
-    "houseOwner": "Parent",
-    "parent": "Parent",
+    "houseOwner": "Family client",
+    "family client": "Family client",
     "homeLocation": "घर का स्थान",
     "homeLocationSub": "खोजें, मैप टैप करें या GPS — सहायक को पास की नौकरियाँ दिखती हैं",
     "saveHomeLocation": "घर का स्थान सेव",

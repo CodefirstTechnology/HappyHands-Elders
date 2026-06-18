@@ -35,7 +35,7 @@ export default ({ config }) => ({
       'expo-location',
       {
         locationWhenInUsePermission:
-          'ChildCare uses your location to mark your service zones and care addresses.',
+          'ElderCare uses your location to mark your service zones and elder care addresses.',
         isAndroidBackgroundLocationEnabled: false,
       },
     ],

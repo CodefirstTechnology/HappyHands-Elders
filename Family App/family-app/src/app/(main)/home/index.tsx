@@ -62,12 +62,12 @@ export default function HomeScreen() {
     ) {
       return liveLocation;
     }
-    const ho = user?.parent;
+    const ho = user?.familyClient;
     if (ho?.latitude != null && ho?.longitude != null) {
       return { latitude: ho.latitude, longitude: ho.longitude };
     }
     return null;
-  }, [liveLocation, user?.parent]);
+  }, [liveLocation, user?.familyClient]);
 
   const { data: nearbyHelpers = [], isLoading: helpersLoading, refetch: refetchHelpers } = useQuery({
     queryKey: ['caregivers', 'home', searchLocation?.latitude, searchLocation?.longitude],
@@ -109,7 +109,7 @@ export default function HomeScreen() {
   const hasBookings = homeActive.length > 0 || homeRecent.length > 0;
 
   const headerLocation = (() => {
-    const ho = user?.parent;
+    const ho = user?.familyClient;
     const detailLines = ho
       ? formatVisitAddressLines({
           flatNo: ho.flatNo,

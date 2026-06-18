@@ -8,10 +8,10 @@ const templates = {
     `Your care-start OTP for ${caregiverName || "your caregiver"} is ${otp}. Share this with your caregiver to begin the session.`,
 
   bookingConfirmation: ({ caregiverName, dateTime }) =>
-    `Your childcare booking with ${caregiverName || "your caregiver"} is confirmed for ${dateTime || "the scheduled time"}. They will arrive at your home.`,
+    `Your eldercare booking with ${caregiverName || "your caregiver"} is confirmed for ${dateTime || "the scheduled time"}. They will arrive at your home.`,
 
   newBookingAlert: () =>
-    "New childcare request near you! Open the ChildCare app to accept."
+    "New eldercare request near you! Open the ElderCare app to accept."
 };
 
 const normalizePhone = (phone) => {

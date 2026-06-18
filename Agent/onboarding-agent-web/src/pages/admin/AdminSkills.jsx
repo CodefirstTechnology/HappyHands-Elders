@@ -107,7 +107,7 @@ export default function AdminSkills() {
       <div>
         <h2 className="text-2xl font-bold">Skills</h2>
         <p className="mt-1 text-sm text-subtext">
-          Manage baby care skills shown on caregiver onboarding and parent browse.
+          Manage elder care skills shown on caregiver onboarding and family browse.
         </p>
       </div>
 

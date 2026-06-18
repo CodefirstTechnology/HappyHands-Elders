@@ -22,7 +22,7 @@ export function DashboardLayout() {
     <div className="flex min-h-screen bg-background">
       <aside className="fixed flex h-full w-64 flex-col border-r border-outline-variant/30 bg-surface/90 backdrop-blur-xl p-5">
         <div className="mb-8">
-          <h1 className="text-xl font-bold text-primary">ChildCare</h1>
+          <h1 className="text-xl font-bold text-primary">ElderCare</h1>
           <p className="text-xs text-on-surface-variant">Coordinator pipeline</p>
         </div>
         <nav className="flex flex-1 flex-col gap-1">

@@ -198,9 +198,10 @@ exports.createCaregiver = async (req, res) => {
     bankUpiId,
     ageRangesServed,
     maxChildren,
-    hasCprCert,
-    hasFirstAidCert,
-    childcareNote
+    emergencyResponseCertified,
+    dementiaCareCertified,
+    fallCareCertified,
+    eldercareNote
   } = req.body;
 
   const email = normalizeEmail(rawEmail);
@@ -277,9 +278,10 @@ exports.createCaregiver = async (req, res) => {
             maxChildren !== undefined && maxChildren !== ""
               ? parseInt(maxChildren, 10)
               : Number(process.env.MAX_CHILDREN_DEFAULT) || 4,
-          hasCprCert: parseBool(hasCprCert, false),
-          hasFirstAidCert: parseBool(hasFirstAidCert, false),
-          childcareNote: childcareNote?.trim() || null,
+          emergencyResponseCertified: parseBool(emergencyResponseCertified, false),
+          dementiaCareCertified: parseBool(dementiaCareCertified, false),
+          fallCareCertified: parseBool(fallCareCertified, false),
+          eldercareNote: eldercareNote?.trim() || null,
           skills: {
             create: skillList.map((skillName) => ({ skillName }))
           }
@@ -398,7 +400,7 @@ exports.getCaregiver = async (req, res) => {
       ...caregiverInclude,
       bookings: {
         include: {
-          parent: { include: { user: { select: { name: true } } } }
+          familyClient: { include: { user: { select: { name: true } } } }
         },
         orderBy: { createdAt: "desc" },
         take: 20
@@ -781,7 +783,7 @@ exports.updateProfile = async (req, res) => {
   const user = await prisma.user.findUnique({
     where: { id: req.user.id },
     include: {
-      parent: true,
+      familyClient: true,
       caregiver: { include: { skills: true, zones: true } },
       coordinator: true,
       ...userWithRoleInclude

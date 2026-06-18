@@ -6,10 +6,10 @@ const en = JSON.parse(fs.readFileSync(path.join(root, 'src/locales/en.json'), 'u
 const hi = JSON.parse(fs.readFileSync(path.join(root, 'src/locales/hi.json'), 'utf8'));
 const mr = JSON.parse(fs.readFileSync(path.join(root, 'src/locales/mr.json'), 'utf8'));
 const hoHi = JSON.parse(
-  fs.readFileSync(path.join(root, '../../House Owner App/house-owner-app/src/locales/hi.json'), 'utf8'),
+  fs.readFileSync(path.join(root, '../../Family App/family-app/src/locales/hi.json'), 'utf8'),
 );
 const hoMr = JSON.parse(
-  fs.readFileSync(path.join(root, '../../House Owner App/house-owner-app/src/locales/mr.json'), 'utf8'),
+  fs.readFileSync(path.join(root, '../../Family App/family-app/src/locales/mr.json'), 'utf8'),
 );
 
 function fillMissing(target, source, alt) {

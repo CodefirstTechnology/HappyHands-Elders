@@ -1,7 +1,7 @@
 const prisma = require("../config/prisma");
 const ApiError = require("../utils/ApiError");
 const { verifyAccessToken } = require("../utils/jwt");
-const { userWithRoleInclude, getRoleCode } = require("../services/roleService");
+const { userWithRoleInclude, getRoleCode, normalizeRoleCode } = require("../services/roleService");
 
 const authenticate = async (req, res, next) => {
   const authHeader = req.headers.authorization;
@@ -17,7 +17,7 @@ const authenticate = async (req, res, next) => {
       where: { id: decoded.id },
       include: {
         ...userWithRoleInclude,
-        parent: true,
+        familyClient: true,
         caregiver: true,
         coordinator: true
       }
@@ -33,7 +33,7 @@ const authenticate = async (req, res, next) => {
       role: getRoleCode(user),
       roleId: user.roleId,
       name: user.name,
-      parent: user.parent,
+      familyClient: user.familyClient,
       caregiver: user.caregiver,
       coordinator: user.coordinator
     };
@@ -50,7 +50,9 @@ const requireRole =
     if (!req.user) {
       return next(new ApiError(401, "Authentication required"));
     }
-    if (!roles.includes(req.user.role)) {
+    const userRole = normalizeRoleCode(req.user.role);
+    const allowed = roles.map(normalizeRoleCode);
+    if (!allowed.includes(userRole)) {
       return next(new ApiError(403, "Insufficient permissions"));
     }
     next();

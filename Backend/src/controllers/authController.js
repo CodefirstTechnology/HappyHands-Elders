@@ -55,9 +55,10 @@ exports.registerParent = async (req, res) => {
     latitude,
     longitude,
     preferredLanguage,
-    numberOfChildren,
-    childrenAges,
-    specialRequirements
+    eldersCount,
+    elderAgeRange,
+    mobilityLevel,
+    medicalNotes
   } = req.body;
   const email = normalizeEmail(req.body.email);
   const phone = normalizePhone(req.body.phone);
@@ -75,25 +76,26 @@ exports.registerParent = async (req, res) => {
       email,
       phone,
       password: hashed,
-      roleId: ROLE_IDS.PARENT,
+      roleId: ROLE_IDS.FAMILY_CLIENT,
       preferredLanguage: preferredLanguage || "en",
-      parent: {
+      familyClient: {
         create: {
           address,
           city,
           latitude: latitude ?? undefined,
           longitude: longitude ?? undefined,
-          numberOfChildren: numberOfChildren ?? undefined,
-          childrenAges: childrenAges ?? [],
-          specialRequirements: specialRequirements?.trim() || null
+          eldersCount: eldersCount ?? 1,
+          elderAgeRange: elderAgeRange ?? undefined,
+          mobilityLevel: mobilityLevel ?? undefined,
+          medicalNotes: medicalNotes?.trim() || null
         }
       }
     },
-    include: { parent: true, ...userWithRoleInclude }
+    include: { familyClient: true, ...userWithRoleInclude }
   });
 
   const tokens = await issueTokens(user);
-  logger.info("Parent registered", { userId: user.id });
+  logger.info("Family client registered", { userId: user.id });
 
   sendSuccess(
     res,
@@ -276,7 +278,7 @@ exports.login = async (req, res) => {
 
   const user = await prisma.user.findUnique({
     where: { email },
-    include: { parent: true, caregiver: true, coordinator: true, ...userWithRoleInclude }
+    include: { familyClient: true, caregiver: true, coordinator: true, ...userWithRoleInclude }
   });
 
   if (!user) {
@@ -352,7 +354,7 @@ exports.me = async (req, res) => {
   const user = await prisma.user.findUnique({
     where: { id: req.user.id },
     include: {
-      parent: true,
+      familyClient: true,
       caregiver: { include: { skills: true, zones: true } },
       coordinator: true,
       ...userWithRoleInclude
@@ -365,19 +367,19 @@ exports.me = async (req, res) => {
 };
 
 exports.updateLocation = async (req, res) => {
-  if (req.user.role !== "PARENT") {
-    throw new ApiError(403, "Only parents can update home location");
+  if (req.user.role !== "FAMILY_CLIENT" && req.user.role !== "PARENT") {
+    throw new ApiError(403, "Only family clients can update home location");
   }
 
-  const parent = await prisma.parent.findUnique({
+  const familyClient = await prisma.familyClient.findUnique({
     where: { userId: req.user.id }
   });
-  if (!parent) throw new ApiError(404, "Parent profile not found");
+  if (!familyClient) throw new ApiError(404, "Family client profile not found");
 
-  const { address, flatNo, building, area, city, latitude, longitude } = req.body;
+  const { address, flatNo, building, area, city, latitude, longitude, eldersCount, elderAgeRange, mobilityLevel, medicalNotes } = req.body;
 
-  const updated = await prisma.parent.update({
-    where: { id: parent.id },
+  const updated = await prisma.familyClient.update({
+    where: { id: familyClient.id },
     data: {
       ...(address !== undefined && { address }),
       ...(flatNo !== undefined && { flatNo: flatNo || null }),
@@ -385,16 +387,20 @@ exports.updateLocation = async (req, res) => {
       ...(area !== undefined && { area: area || null }),
       ...(city !== undefined && { city }),
       ...(latitude !== undefined && { latitude }),
-      ...(longitude !== undefined && { longitude })
+      ...(longitude !== undefined && { longitude }),
+      ...(eldersCount !== undefined && { eldersCount }),
+      ...(elderAgeRange !== undefined && { elderAgeRange: elderAgeRange || null }),
+      ...(mobilityLevel !== undefined && { mobilityLevel: mobilityLevel || null }),
+      ...(medicalNotes !== undefined && { medicalNotes: medicalNotes?.trim() || null })
     }
   });
 
   const user = await prisma.user.findUnique({
     where: { id: req.user.id },
-    include: { parent: true, caregiver: true, coordinator: true, ...userWithRoleInclude }
+    include: { familyClient: true, caregiver: true, coordinator: true, ...userWithRoleInclude }
   });
 
-  sendSuccess(res, { parent: updated, user: sanitizeUser(user) });
+  sendSuccess(res, { familyClient: updated, user: sanitizeUser(user) });
 };
 
 exports.updatePreferences = async (req, res) => {
@@ -404,7 +410,7 @@ exports.updatePreferences = async (req, res) => {
     where: { id: req.user.id },
     data: { preferredLanguage },
     include: {
-      parent: true,
+      familyClient: true,
       caregiver: { include: { skills: true, zones: true } },
       coordinator: true,
       ...userWithRoleInclude

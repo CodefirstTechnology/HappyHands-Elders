@@ -34,7 +34,7 @@ export default function Login() {
       if (!['COORDINATOR', 'ADMIN'].includes(user.role)) {
         localStorage.clear()
         setError(
-          'This portal is for coordinators and admins only. Caregivers and parents must use the mobile app.',
+          'This portal is for coordinators and admins only. Caregivers and family clients must use the mobile app.',
         )
         return
       }
@@ -52,9 +52,9 @@ export default function Login() {
 
       <div className="glass-card w-full max-w-md p-10 z-10">
         <p className="text-sm font-semibold text-secondary mb-1">Coordinator & Admin Portal</p>
-        <h1 className="text-3xl font-bold text-primary tracking-tight mb-2">ChildCare</h1>
+        <h1 className="text-3xl font-bold text-primary tracking-tight mb-2">ElderCare</h1>
         <p className="text-on-surface-variant text-sm mb-8">
-          Onboard and verify caregivers. Trusted by families across India.
+          Onboard and verify caregivers. Trusted by families caring for elders across India.
         </p>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">

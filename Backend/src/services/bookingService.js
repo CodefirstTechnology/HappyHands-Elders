@@ -127,10 +127,10 @@ const checkMonthlyConflict = async (caregiverId, bookingData, excludeBookingId) 
   return false;
 };
 
-const checkParentPendingDuplicate = async (parentId, caregiverId, bookingData) => {
+const checkFamilyClientPendingDuplicate = async (familyClientId, caregiverId, bookingData) => {
   const pending = await prisma.booking.findMany({
     where: {
-      parentId,
+      familyClientId,
       caregiverId,
       status: "PENDING"
     }
@@ -247,11 +247,11 @@ const checkBookingConflict = async (
   caregiverId,
   bookingData,
   excludeBookingId,
-  parentId
+  familyClientId
 ) => {
-  if (parentId) {
-    const ownPending = await checkParentPendingDuplicate(
-      parentId,
+  if (familyClientId) {
+    const ownPending = await checkFamilyClientPendingDuplicate(
+      familyClientId,
       caregiverId,
       bookingData
     );

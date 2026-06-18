@@ -26,7 +26,7 @@ export default function BookingDetailScreen() {
   const bookingId = id ? parseInt(id, 10) : null;
   const qc = useQueryClient();
   const [rating, setRating] = useState(5);
-  const [childSafetyRating, setChildSafetyRating] = useState(5);
+  const [elderSafetyRating, setElderSafetyRating] = useState(5);
   const [reviewComment, setReviewComment] = useState('');
   const [submittingReview, setSubmittingReview] = useState(false);
 
@@ -99,7 +99,7 @@ export default function BookingDetailScreen() {
     try {
       await api.post(`/bookings/${id}/review`, {
         rating,
-        childSafetyRating,
+        elderSafetyRating,
         comment: reviewComment.trim() || undefined,
       });
       qc.invalidateQueries({ queryKey: ['booking', id] });
@@ -246,12 +246,12 @@ export default function BookingDetailScreen() {
               </TouchableOpacity>
             ))}
           </View>
-          <Text style={styles.reviewLabel}>{t('bookings.childSafetyRating')}</Text>
+          <Text style={styles.reviewLabel}>{t('bookings.elderSafetyRating')}</Text>
           <View style={styles.starRow}>
             {[1, 2, 3, 4, 5].map((n) => (
-              <TouchableOpacity key={`safety-${n}`} onPress={() => setChildSafetyRating(n)}>
+              <TouchableOpacity key={`safety-${n}`} onPress={() => setElderSafetyRating(n)}>
                 <MaterialIcons
-                  name={n <= childSafetyRating ? 'verified-user' : 'shield'}
+                  name={n <= elderSafetyRating ? 'verified-user' : 'shield'}
                   size={28}
                   color={Stitch.colors.primary}
                 />

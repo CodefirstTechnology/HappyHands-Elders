@@ -1,7 +1,7 @@
 {
   "common": {
-    "appName": "BabyCare",
-    "appNamePro": "BabyCare Pro",
+    "appName": "ElderCare",
+    "appNamePro": "ElderCare Pro",
     "loading": "Loading…",
     "saving": "Saving…",
     "save": "Save",
@@ -56,8 +56,8 @@
     "notifications": "Alerts"
   },
   "auth": {
-    "trustedSubtitle": "Trusted baby nanny work — on your schedule",
-    "trustLine": "Verified nannies · Infant care · Support in English & Hindi",
+    "trustedSubtitle": "Trusted elder care work — on your schedule",
+    "trustLine": "Verified caregivers · Elder care · Support in English & Hindi",
     "safeData": "Your home details stay private and encrypted.",
     "email": "Email",
     "password": "Password",
@@ -66,10 +66,10 @@
     "newAccount": "New here? Create your account",
     "loginFailed": "Login failed",
     "tryAgain": "Please try again",
-    "wrongRole": "This account is not a parent. Use the Nanny or Coordinator app.",
-    "wrongRoleServant": "This account is not a nanny. Use the Parent or Coordinator app.",
-    "joinTitle": "Join BabyCare",
-    "joinSubtitle": "Care for babies and infants with dignity",
+    "wrongRole": "This account is not a family client. Use the Caregiver or Coordinator app.",
+    "wrongRoleServant": "This account is not a caregiver. Use the Family or Coordinator app.",
+    "joinTitle": "Join ElderCare",
+    "joinSubtitle": "Care for elders with dignity",
     "fullName": "Full name",
     "phone": "Phone (+91)",
     "confirmPassword": "Confirm password",
@@ -86,7 +86,7 @@
     "servantJoinSubtitle": "Submit your details to apply as a baby nanny.",
     "register": "Register",
     "registrationAgentContact": "A coordinator will contact you soon. After verification they will share your password — then you can sign in below.",
-    "registrationSuccessBody": "Your application was submitted. A BabyCare coordinator will contact you to verify your details and give you login credentials.",
+    "registrationSuccessBody": "Your application was submitted. An ElderCare coordinator will contact you to verify your details and give you login credentials.",
     "registrationEmailNote": "We saved your email: {{email}}",
     "goToSignIn": "Go to sign in",
     "addressManual": "Address (type or edit)",
@@ -446,17 +446,18 @@
     "todaySchedule": "Today's care schedule"
   },
   "caregiverProfile": {
-    "childcareDetails": "Baby care details",
-    "ageRanges": "Baby age ranges served",
-    "maxChildren": "Max babies at once",
-    "cprCert": "CPR certified",
-    "firstAidCert": "First aid certified",
+    "eldercareDetails": "Elder care details",
+    "ageRanges": "Elder age ranges served",
+    "maxElders": "Max elders at once",
+    "emergencyResponseCert": "Emergency response certified",
+    "dementiaCareCert": "Dementia care certified",
+    "fallCareCert": "Fall care certified",
     "rating": "Rating",
     "perHour": "Per hour",
     "experience": "Experience",
     "yourSkills": "Your skills",
     "aboutYou": "About you",
-    "serviceZonesSub": "Set by your coordinator — parents near these areas see your open requests"
+    "serviceZonesSub": "Set by your coordinator — family clients near these areas see your open requests"
   },
   "workOtp": {
     "requestOtp": "I arrived — get OTP",

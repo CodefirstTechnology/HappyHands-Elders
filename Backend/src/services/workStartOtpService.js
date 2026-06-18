@@ -10,7 +10,7 @@ const MAX_ATTEMPTS = 3;
 const hashOtp = (otp, bookingId) =>
   crypto
     .createHash("sha256")
-    .update(`${otp}:${bookingId}:${process.env.JWT_SECRET || "childcare"}`)
+    .update(`${otp}:${bookingId}:${process.env.JWT_SECRET || "eldercare"}`)
     .digest("hex");
 
 const generateOtpCode = () => String(Math.floor(1000 + Math.random() * 9000));
@@ -83,7 +83,7 @@ const issueWorkStartOtp = async ({ booking, caregiverUser, ownerUserId }) => {
 const verifyWorkStartOtp = async ({ bookingId, otpInput }) => {
   const otp = String(otpInput || "").trim();
   if (!/^\d{4}$/.test(otp)) {
-    throw new ApiError(400, "Enter the 4-digit care-start OTP from the parent");
+    throw new ApiError(400, "Enter the 4-digit care-start OTP from the family client");
   }
 
   const record = await getActiveOtp(bookingId);
@@ -148,7 +148,7 @@ const attachWorkOtpFields = async (bookings, role) => {
     const row = otpByBooking.get(booking.id);
     if (!row) return { ...booking, pendingWorkOtp: false };
 
-    if (role === "PARENT") {
+    if (role === "FAMILY_CLIENT" || role === "PARENT") {
       return {
         ...booking,
         pendingWorkOtp: true,

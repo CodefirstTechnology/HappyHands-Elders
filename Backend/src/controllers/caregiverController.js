@@ -16,15 +16,15 @@ const caregiverInclude = {
   coordinator: { include: { user: { select: { name: true } } } }
 };
 
-const resolveParentCoords = async (userId, queryLat, queryLng) => {
+const resolveFamilyClientCoords = async (userId, queryLat, queryLng) => {
   let lat = queryLat != null ? Number(queryLat) : null;
   let lng = queryLng != null ? Number(queryLng) : null;
 
   if (lat == null || lng == null || Number.isNaN(lat) || Number.isNaN(lng)) {
-    const parent = await prisma.parent.findUnique({ where: { userId } });
-    if (parent?.latitude != null && parent?.longitude != null) {
-      lat = parent.latitude;
-      lng = parent.longitude;
+    const familyClient = await prisma.familyClient.findUnique({ where: { userId } });
+    if (familyClient?.latitude != null && familyClient?.longitude != null) {
+      lat = familyClient.latitude;
+      lng = familyClient.longitude;
     }
   }
 
@@ -45,21 +45,23 @@ exports.listCaregivers = async (req, res) => {
     longitude,
     radiusKm,
     ageRange,
-    hasCprCert,
-    hasFirstAidCert,
+    emergencyResponseCertified,
+    dementiaCareCertified,
+    fallCareCertified,
     maxChildren
   } = req.query;
   const page = Math.max(1, parseInt(req.query.page, 10) || 1);
   const limit = Math.min(50, parseInt(req.query.limit, 10) || 20);
   const skip = (page - 1) * limit;
-  const { lat, lng } = await resolveParentCoords(req.user.id, latitude, longitude);
+  const { lat, lng } = await resolveFamilyClientCoords(req.user.id, latitude, longitude);
   const radius = radiusKm != null ? Number(radiusKm) : DEFAULT_RADIUS_KM;
 
   const requireAadhaar =
     process.env.REQUIRE_AADHAAR_VERIFICATION !== "false";
 
-  const cprFilter = parseBoolQuery(hasCprCert);
-  const firstAidFilter = parseBoolQuery(hasFirstAidCert);
+  const emergencyFilter = parseBoolQuery(emergencyResponseCertified);
+  const dementiaFilter = parseBoolQuery(dementiaCareCertified);
+  const fallFilter = parseBoolQuery(fallCareCertified);
   const maxChildrenFilter =
     maxChildren != null && maxChildren !== "" ? parseInt(maxChildren, 10) : null;
 
@@ -73,8 +75,9 @@ exports.listCaregivers = async (req, res) => {
     ...(ageRange
       ? { ageRangesServed: { has: String(ageRange) } }
       : {}),
-    ...(cprFilter === true ? { hasCprCert: true } : {}),
-    ...(firstAidFilter === true ? { hasFirstAidCert: true } : {}),
+    ...(emergencyFilter === true ? { emergencyResponseCertified: true } : {}),
+    ...(dementiaFilter === true ? { dementiaCareCertified: true } : {}),
+    ...(fallFilter === true ? { fallCareCertified: true } : {}),
     ...(maxChildrenFilter != null && !Number.isNaN(maxChildrenFilter)
       ? {
           OR: [
@@ -135,7 +138,7 @@ exports.getCaregiver = async (req, res) => {
       ...caregiverInclude,
       bookings: {
         where: { status: "COMPLETED", review: { isNot: null } },
-        include: { review: true, parent: { include: { user: { select: { name: true } } } } },
+        include: { review: true, familyClient: { include: { user: { select: { name: true } } } } },
         take: 5,
         orderBy: { createdAt: "desc" }
       }
@@ -143,7 +146,7 @@ exports.getCaregiver = async (req, res) => {
   });
 
   if (!caregiver) throw new ApiError(404, "Caregiver not found");
-  if (req.user.role === "PARENT") {
+  if (req.user.role === "FAMILY_CLIENT" || req.user.role === "PARENT") {
     if (caregiver.verificationStatus !== "VERIFIED") {
       throw new ApiError(404, "Caregiver not found");
     }
@@ -154,7 +157,7 @@ exports.getCaregiver = async (req, res) => {
       throw new ApiError(404, "Caregiver not found");
     }
 
-    const { lat, lng } = await resolveParentCoords(
+    const { lat, lng } = await resolveFamilyClientCoords(
       req.user.id,
       req.query.latitude,
       req.query.longitude
@@ -189,7 +192,10 @@ exports.updateMyProfile = async (req, res) => {
     bankAccountNumber,
     bankName,
     bankIfsc,
-    bankUpiId
+    bankUpiId,
+    emergencyResponseCertified,
+    dementiaCareCertified,
+    fallCareCertified
   } = req.body;
 
   const caregiver = await prisma.caregiver.findUnique({
@@ -219,7 +225,14 @@ exports.updateMyProfile = async (req, res) => {
       ...(bankIfsc !== undefined && {
         bankIfsc: bankIfsc?.trim() ? bankIfsc.trim().toUpperCase() : null
       }),
-      ...(bankUpiId !== undefined && { bankUpiId: bankUpiId?.trim() || null })
+      ...(bankUpiId !== undefined && { bankUpiId: bankUpiId?.trim() || null }),
+      ...(emergencyResponseCertified !== undefined && {
+        emergencyResponseCertified: !!emergencyResponseCertified
+      }),
+      ...(dementiaCareCertified !== undefined && {
+        dementiaCareCertified: !!dementiaCareCertified
+      }),
+      ...(fallCareCertified !== undefined && { fallCareCertified: !!fallCareCertified })
     },
     include: caregiverInclude
   });
@@ -239,7 +252,7 @@ exports.getMySchedule = async (req, res) => {
       status: { in: ["PENDING", "CONFIRMED", "ACTIVE"] }
     },
     include: {
-      parent: { include: { user: { select: { name: true, phone: true } } } }
+      familyClient: { include: { user: { select: { name: true, phone: true } } } }
     },
     orderBy: { createdAt: "asc" }
   });

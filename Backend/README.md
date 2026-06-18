@@ -1,6 +1,6 @@
-# ChildCare Backend API
+# ElderCare Backend API
 
-Node.js REST API for the HappyHands Elders (ChildCare) platform. Handles authentication, caregiver onboarding, bookings, GPS tracking, Aadhaar KYC, notifications, and file uploads.
+Node.js REST API for the HappyHands Elders platform. Handles authentication, caregiver onboarding, bookings, GPS tracking, Aadhaar KYC, notifications, and file uploads.
 
 **Full monorepo docs:** [`../README.md`](../README.md)
 
@@ -81,8 +81,8 @@ npm run dev
 
 | Role | Email | Password |
 |------|-------|----------|
-| Admin | `admin@childcare.com` | `ChildCare@123` |
-| Coordinator | `coordinator@childcare.com` | `ChildCare@123` |
+| Admin | `admin@eldercare.com` | `ElderCare@123` |
+| Coordinator | `coordinator@eldercare.com` | `ElderCare@123` |
 
 ---
 

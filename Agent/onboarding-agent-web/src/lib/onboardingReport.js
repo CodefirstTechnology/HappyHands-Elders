@@ -21,7 +21,7 @@ export function buildReportFromForm(form, skillsCatalog = [], files = {}) {
     (code) => skillsCatalog.find((s) => s.code === code)?.label || code.replace(/_/g, ' '),
   )
   return {
-    title: 'ChildCare — Caregiver onboarding report',
+    title: 'ElderCare — Caregiver onboarding report',
     generatedAt: new Date().toLocaleString('en-IN'),
     personal: {
       name: form.name,
@@ -81,7 +81,7 @@ export function buildReportFromFormSubmitted(form, skills, files, servant) {
 export function buildReportFromServant(servant) {
   const u = servant.user || {}
   return {
-    title: 'ChildCare — Caregiver onboarding report',
+    title: 'ElderCare — Caregiver onboarding report',
     generatedAt: new Date().toLocaleString('en-IN'),
     caregiverId: servant.id,
     personal: {
@@ -220,7 +220,7 @@ function reportHtml(data) {
   ${data.rejectionReason ? `<p style="color:#ba1a1a"><strong>Rejection:</strong> ${esc(data.rejectionReason)}</p>` : ''}
   ${data.bookingsCount != null ? `<p class="meta">Bookings on record: ${data.bookingsCount}</p>` : ''}
 
-  <p class="meta" style="margin-top:2rem">ChildCare Coordinator Portal — confidential</p>
+  <p class="meta" style="margin-top:2rem">ElderCare Coordinator Portal — confidential</p>
 </body>
 </html>`
 }
@@ -240,7 +240,7 @@ export function downloadOnboardingReport(data, filenameBase = 'onboarding-report
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
-  a.download = `childcare-${safeName || 'caregiver'}-report.html`
+  a.download = `eldercare-${safeName || 'caregiver'}-report.html`
   document.body.appendChild(a)
   a.click()
   a.remove()

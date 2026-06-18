@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "BabyCare for Parents",
-    "slug": "childcare-parent-app",
+    "name": "ElderCare for Families",
+    "slug": "eldercare-family-app",
     "owner": "pravinbehere45",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -9,11 +9,11 @@
     "scheme": "houseownerapp",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "bundleIdentifier": "com.childcare.parentapp",
+      "bundleIdentifier": "com.eldercare.familyapp",
       "icon": "./assets/expo.icon"
     },
     "android": {
-      "package": "com.childcare.parentapp",
+      "package": "com.eldercare.familyapp",
       "permissions": [
         "ACCESS_COARSE_LOCATION",
         "ACCESS_FINE_LOCATION",

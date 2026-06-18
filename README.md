@@ -1,6 +1,6 @@
-# HappyHands Elders (ChildCare Platform)
+# HappyHands Elders
 
-**ChildCare** is a childcare marketplace built for India. Parents discover and book verified caregivers; coordinators onboard and verify staff in the field; caregivers manage schedules, GPS tracking, time entries, and earnings through a dedicated mobile app.
+**ElderCare** is an eldercare marketplace built for India. Family clients discover and book verified caregivers; coordinators onboard and verify staff in the field; caregivers manage schedules, GPS tracking, time entries, and earnings through a dedicated mobile app.
 
 This monorepo contains the full product stack:
 
@@ -8,8 +8,8 @@ This monorepo contains the full product stack:
 |-----------|--------|------|
 | REST API | `Backend/` | Node.js 20, Express 5, Prisma, PostgreSQL, Redis |
 | Coordinator portal | `Agent/onboarding-agent-web/` | React 19, Vite 8, Tailwind CSS 4 |
-| Parent app | `House Owner App/house-owner-app/` | Expo 54, React Native 0.81 |
-| Caregiver app | `Servant/servant-app/` | Expo 54, React Native 0.81 |
+| Family app | `Family App/family-app/` | Expo 54, React Native 0.81 |
+| Caregiver app | `Caregiver App/caregiver-app/` | Expo 54, React Native 0.81 |
 | Deploy | `deploy/`, `docker-compose.yml` | Docker Compose + host nginx |
 
 **Repository:** [github.com/CodefirstTechnology/HappyHands-Elders](https://github.com/CodefirstTechnology/HappyHands-Elders)
@@ -24,7 +24,7 @@ This monorepo contains the full product stack:
 4. [Monorepo structure](#monorepo-structure)
 5. [Backend API](#backend-api)
 6. [Coordinator portal](#coordinator-portal)
-7. [Parent app (mobile)](#parent-app-mobile)
+7. [Family app (mobile)](#parent-app-mobile)
 8. [Caregiver app (mobile)](#caregiver-app-mobile)
 9. [Marketing website](#marketing-website)
 10. [Environment variables & secrets](#environment-variables--secrets)
@@ -43,11 +43,11 @@ Run these in order on a machine with **Node.js 20+**, **PostgreSQL 16+**, and **
 ### 1. Database & Redis (Docker option)
 
 ```bash
-docker run -d --name childcare-pg \
-  -e POSTGRES_PASSWORD=password -e POSTGRES_DB=childcare \
+docker run -d --name eldercare-pg \
+  -e POSTGRES_PASSWORD=password -e POSTGRES_DB=Eldercare_db \
   -p 5432:5432 postgres:16-alpine
 
-docker run -d --name childcare-redis -p 6379:6379 redis:7-alpine
+docker run -d --name eldercare-redis -p 6379:6379 redis:7-alpine
 ```
 
 ### 2. Backend API
@@ -73,19 +73,19 @@ npm install
 npm run dev                   # http://localhost:5173
 ```
 
-Login: `coordinator@childcare.com` / `ChildCare@123` (or admin account below).
+Login: `coordinator@eldercare.com` / `ElderCare@123` (or admin account below).
 
 ### 4. Mobile apps
 
 ```bash
-# Parent app
-cd "House Owner App/house-owner-app"
+# Family app
+cd "Family App/family-app"
 cp .env.example .env
 npm install && npx expo install
 npm start
 
 # Caregiver app (separate terminal)
-cd Servant/servant-app
+cd Caregiver App/caregiver-app
 cp .env.example .env
 npm install && npx expo install
 npm start
@@ -93,7 +93,7 @@ npm start
 
 On a **physical phone**, set `EXPO_PUBLIC_API_BASE_URL` to your PC's LAN IP (from `ipconfig`), not `localhost`. Restart Expo with `npx expo start -c` after changing `.env`.
 
-Open the workspace in VS Code/Cursor: `StaffEra.code-workspace`.
+Open the workspace in VS Code/Cursor: `HappyHandsElders.code-workspace`.
 
 ---
 
@@ -102,7 +102,7 @@ Open the workspace in VS Code/Cursor: `StaffEra.code-workspace`.
 ```mermaid
 flowchart TB
   subgraph clients [Clients]
-    PA[Parent App<br/>Expo / Android / iOS]
+    PA[Family client App<br/>Expo / Android / iOS]
     CG[Caregiver App<br/>Expo / Android / iOS]
     CO[Coordinator Portal<br/>React + Vite]
     WEB[Marketing Website<br/>React + Vite]
@@ -135,7 +135,7 @@ flowchart TB
 | Auth | JWT access (15m) + refresh (7d), bcrypt passwords |
 | Maps & geo | Google Maps / Places / Geocoding |
 | KYC | UIDAI Aadhaar offline XML verification |
-| SMS | MSG91 or Twilio (care-start OTP to parents) |
+| SMS | MSG91 or Twilio (care-start OTP to family clients) |
 | Deploy | Docker Compose + host nginx + Let's Encrypt |
 
 ---
@@ -147,16 +147,16 @@ flowchart TB
 | **Admin** | 1 | Seeded | Coordinator portal → `/admin` |
 | **Coordinator** | 2 | Created by admin or seeded | Coordinator portal |
 | **Caregiver** | 3 | Onboarded by coordinator (primary) or self-register (pending) | Caregiver app |
-| **Parent** | 4 | Self-register in parent app | Parent app |
+| **Parent** | 4 | Self-register in family app | Family app |
 
 ### Default seeded accounts
 
 | Role | Email | Password |
 |------|-------|----------|
-| Admin | `admin@childcare.com` | `ChildCare@123` |
-| Coordinator | `coordinator@childcare.com` | `ChildCare@123` |
+| Admin | `admin@eldercare.com` | `ElderCare@123` |
+| Coordinator | `coordinator@eldercare.com` | `ElderCare@123` |
 
-Parents register via `POST /api/v1/auth/register-parent`. Caregivers are created by coordinators; default onboarding password in the portal form is `Caregiver@123` unless changed.
+Family clients register via `POST /api/v1/auth/register-parent`. Caregivers are created by coordinators; default onboarding password in the portal form is `Caregiver@123` unless changed.
 
 ### Typical journey
 
@@ -179,12 +179,12 @@ HappyHands-Elders/
 │   └── certs/                       # UIDAI public certificates (Aadhaar KYC)
 ├── Agent/
 │   └── onboarding-agent-web/        # Coordinator + admin web portal
-├── House Owner App/
-│   └── house-owner-app/             # Expo parent app
-├── Servant/
-│   └── servant-app/                 # Expo caregiver app
+├── Family App/
+│   └── family-app/                  # Expo family client app
+├── Caregiver App/
+│   └── caregiver-app/               # Expo caregiver app
 ├── deploy/
-│   ├── nginx/childcare.conf         # Host nginx template
+│   ├── nginx/eldercare.conf         # Host nginx template
 │   └── scripts/deploy.sh            # Production deploy helper
 ├── scripts/
 │   ├── check-no-secrets.js          # Pre-commit secret scanner
@@ -192,7 +192,7 @@ HappyHands-Elders/
 ├── .githooks/pre-commit             # Runs secret check on commit
 ├── docker-compose.yml               # Production Docker stack
 ├── .env.production.example          # VPS env template
-├── StaffEra.code-workspace          # VS Code multi-root workspace
+├── HappyHandsElders.code-workspace          # VS Code multi-root workspace
 └── README.md                        # This file
 ```
 
@@ -200,8 +200,8 @@ HappyHands-Elders/
 |-----|------|-----------------|
 | Backend API | `Backend/` | `http://localhost:5000/api/v1` |
 | Coordinator portal | `Agent/onboarding-agent-web/` | `http://localhost:5173` |
-| Parent app | `House Owner App/house-owner-app/` | Expo dev server |
-| Caregiver app | `Servant/servant-app/` | Expo dev server |
+| Family app | `Family App/family-app/` | Expo dev server |
+| Caregiver app | `Caregiver App/caregiver-app/` | Expo dev server |
 
 > **Note:** Some internal filenames still use legacy names (`servant`, `house-owner`). User-facing copy and API routes use **caregiver** and **parent**.
 
@@ -234,7 +234,7 @@ All routes prefixed with `/api/v1`.
 
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|
-| POST | `/register-parent` | — | Parent signup |
+| POST | `/register-parent` | — | Family client signup |
 | POST | `/register-caregiver` | — | Self-registration (pending review) |
 | POST | `/login` | — | Email/password login |
 | POST | `/refresh` | — | Refresh access token |
@@ -381,11 +381,11 @@ Docker: `Agent/onboarding-agent-web/Dockerfile` (nginx serves static files).
 
 ---
 
-## Parent app (mobile)
+## Family app (mobile)
 
-See [`House Owner App/house-owner-app/README.md`](House%20Owner%20App/house-owner-app/README.md).
+See [`Family App/family-app/README.md`](House%20Owner%20App/house-owner-app/README.md).
 
-Expo app for parents: browse caregivers, book sessions, live tracking, work-start OTP, reviews.
+Expo app for family clients: browse caregivers, book sessions, live tracking, work-start OTP, reviews.
 
 ### Stack
 
@@ -394,7 +394,7 @@ Expo SDK 54 · expo-router 6 · React Native 0.81 · TanStack Query · Zustand �
 ### Local setup
 
 ```bash
-cd "House Owner App/house-owner-app"
+cd "Family App/family-app"
 cp .env.example .env
 npm install && npx expo install
 npm start
@@ -433,18 +433,18 @@ EXPO_PUBLIC_API_BASE_URL=https://api.yourdomain.com/api/v1
 
 ## Caregiver app (mobile)
 
-See [`Servant/servant-app/README.md`](Servant/servant-app/README.md).
+See [`Caregiver App/caregiver-app/README.md`](Caregiver App/caregiver-app/README.md).
 
 Expo app for onboarded caregivers: schedules, open requests, time tracking, GPS, Aadhaar KYC, earnings.
 
 ### Stack
 
-Same core as parent app, plus expo-notifications, expo-haptics, expo-document-picker (Aadhaar ZIP).
+Same core as family app, plus expo-notifications, expo-haptics, expo-document-picker (Aadhaar ZIP).
 
 ### Local setup
 
 ```bash
-cd Servant/servant-app
+cd Caregiver App/caregiver-app
 cp .env.example .env
 npm install && npx expo install
 npm start
@@ -475,7 +475,7 @@ Open booking requests trigger vibration + push notifications when they match the
 
 ## Marketing website
 
-Production Docker Compose includes a **website** service built from `ChildCare_website/` (port `15001`). This folder is **not included in the repo yet** — add or clone your marketing site there before running the full stack.
+Production Docker Compose includes a **website** service built from `ElderCare_website/` (port `15001`). This folder is **not included in the repo yet** — add or clone your marketing site there before running the full stack.
 
 Build args (from `.env.production.example`):
 
@@ -500,8 +500,8 @@ Real secrets live only in local `.env` files (gitignored):
 
 - `Backend/.env`
 - `Agent/onboarding-agent-web/.env`
-- `House Owner App/house-owner-app/.env`
-- `Servant/servant-app/.env`
+- `Family App/family-app/.env`
+- `Caregiver App/caregiver-app/.env`
 
 ### Pre-commit secret check
 
@@ -567,7 +567,7 @@ Enable in Google Cloud Console: **Places API**, **Geocoding API**, **Maps SDK fo
 
 ### Aadhaar KYC
 
-Download UIDAI offline public key to `Backend/certs/` (see `Backend/certs/README.md`). When `REQUIRE_AADHAAR_VERIFICATION=true`, parents only see Aadhaar-verified caregivers in browse.
+Download UIDAI offline public key to `Backend/certs/` (see `Backend/certs/README.md`). When `REQUIRE_AADHAAR_VERIFICATION=true`, family clients only see Aadhaar-verified caregivers in browse.
 
 ### SMS / work-start OTP
 
@@ -598,23 +598,23 @@ docker compose --env-file .env exec api node prisma/seed.js
 
 ### 2. Host nginx
 
-Copy `deploy/nginx/childcare.conf` to `/etc/nginx/sites-available/`, replace example domains, enable site, reload nginx. SSL via Let's Encrypt (`certbot` — instructions in nginx config).
+Copy `deploy/nginx/eldercare.conf` to `/etc/nginx/sites-available/`, replace example domains, enable site, reload nginx. SSL via Let's Encrypt (`certbot` — instructions in nginx config).
 
 ### 3. Default upstream ports (localhost)
 
 | Service | Env variable | Default port |
 |---------|--------------|--------------|
-| API | `CHILDCARE_API_PORT` | 15000 |
-| Website | `CHILDCARE_WEBSITE_PORT` | 15001 |
-| Coordinator portal | `CHILDCARE_COORDINATOR_PORT` | 15002 |
+| API | `ELDERCARE_API_PORT` | 15000 |
+| Website | `ELDERCARE_WEBSITE_PORT` | 15001 |
+| Coordinator portal | `ELDERCARE_COORDINATOR_PORT` | 15002 |
 
 ### 4. DNS
 
 | Host | Service |
 |------|---------|
-| `childcare.example.com` | Marketing site |
-| `coordinator.childcare.example.com` | Coordinator portal |
-| `api.childcare.example.com` | API + `/uploads` |
+| `eldercare.example.com` | Marketing site |
+| `coordinator.eldercare.example.com` | Coordinator portal |
+| `api.eldercare.example.com` | API + `/uploads` |
 
 ### Production checklist
 
@@ -634,10 +634,10 @@ Copy `deploy/nginx/childcare.conf` to `/etc/nginx/sites-available/`, replace exa
 - Primary caregiver onboarding is **coordinator-only** via the portal. Self-registration creates a `PENDING` profile for review.
 - Browse lists only **`VERIFIED`** caregivers.
 - Caregiver profiles require age range served, max children, CPR/first-aid flags.
-- Parent profiles include children count, ages, special requirements.
+- Family client profiles include children count, ages, special requirements.
 - **Aadhaar gate** — when enabled, only verified caregivers appear in browse.
 - Booking conflicts prevented inside Prisma transactions.
-- **Open area requests** require parent GPS; caregivers need matching zones/skills.
+- **Open area requests** require family client GPS; caregivers need matching zones/skills.
 - **Care-start OTP** — SMS to parent's mobile; caregiver verifies before `ACTIVE`.
 - **Reviews** only after `COMPLETED`; must include child safety rating (1–5).
 - Coordinators matched within `CAREGIVER_COORDINATOR_RADIUS_KM` (default 3 km).
@@ -669,7 +669,7 @@ Patterns: glass cards, ₹ pricing, verified badges, bilingual UI (EN / HI / MR)
 | Caregiver can't log in | Account must exist from coordinator portal first |
 | Upload images broken in portal | Check `VITE_API_BASE_URL`; backend must serve `/uploads` |
 | OTP not received | Dev: `SMS_PROVIDER=log`; prod: check MSG91/Twilio creds |
-| Docker website build fails | Add `ChildCare_website/` or disable `website` service |
+| Docker website build fails | Add `ElderCare_website/` or disable `website` service |
 
 ---
 
@@ -679,8 +679,8 @@ Patterns: glass cards, ₹ pricing, verified badges, bilingual UI (EN / HI / MR)
 |---------|--------|
 | Backend API | [`Backend/README.md`](Backend/README.md) |
 | Coordinator portal | [`Agent/onboarding-agent-web/README.md`](Agent/onboarding-agent-web/README.md) |
-| Parent app | [`House Owner App/house-owner-app/README.md`](House%20Owner%20App/house-owner-app/README.md) |
-| Caregiver app | [`Servant/servant-app/README.md`](Servant/servant-app/README.md) |
+| Family app | [`Family App/family-app/README.md`](House%20Owner%20App/house-owner-app/README.md) |
+| Caregiver app | [`Caregiver App/caregiver-app/README.md`](Caregiver App/caregiver-app/README.md) |
 | UIDAI certificates | [`Backend/certs/README.md`](Backend/certs/README.md) |
 
 ---

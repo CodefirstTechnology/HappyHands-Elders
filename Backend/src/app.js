@@ -101,16 +101,16 @@ app.use("/api/v1/geo", require("./routes/geoRoutes"));
 app.use("/api/v1/kyc", require("./routes/kycRoutes"));
 
 app.get("/", (req, res) => {
-  res.json({ success: true, message: "ChildCare API Running" });
+  res.json({ success: true, message: "ElderCare API Running" });
 });
 
 app.get("/health", async (req, res) => {
   try {
     await prisma.$queryRaw`SELECT 1`;
-    res.status(200).json({ status: "ok", service: "childcare-api" });
+    res.status(200).json({ status: "ok", service: "eldercare-api" });
   } catch (err) {
     logger.error("Health check failed", { message: err.message });
-    res.status(503).json({ status: "error", service: "childcare-api" });
+    res.status(503).json({ status: "error", service: "eldercare-api" });
   }
 });
 

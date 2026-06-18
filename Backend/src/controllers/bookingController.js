@@ -29,7 +29,7 @@ const bookingInclude = {
       skills: true
     }
   },
-  parent: {
+  familyClient: {
     include: { user: { select: { id: true, name: true, phone: true } } }
   },
   review: true,
@@ -42,7 +42,7 @@ const loadBooking = (id) =>
     include: {
       ...bookingInclude,
       caregiver: { include: { user: { select: { id: true } }, skills: true } },
-      parent: { include: { user: { select: { id: true, name: true, phone: true } } } }
+      familyClient: { include: { user: { select: { id: true, name: true, phone: true } } } }
     }
   });
 
@@ -91,10 +91,10 @@ const normalizeSessionBooking = (body) => {
 };
 
 exports.createBooking = async (req, res) => {
-  const parent = await prisma.parent.findUnique({
+  const familyClient = await prisma.familyClient.findUnique({
     where: { userId: req.user.id }
   });
-  if (!parent) throw new ApiError(403, "Parent profile required");
+  if (!familyClient) throw new ApiError(403, "Family client profile required");
 
   const sessionFields = normalizeSessionBooking(req.body);
   const bookingData = {
@@ -113,12 +113,12 @@ exports.createBooking = async (req, res) => {
       : undefined
   };
 
-  const latitude = bookingData.latitude ?? parent.latitude ?? undefined;
-  const longitude = bookingData.longitude ?? parent.longitude ?? undefined;
-  const address = bookingData.address || parent.address;
-  const flatNo = bookingData.flatNo ?? parent.flatNo ?? undefined;
-  const building = bookingData.building ?? parent.building ?? undefined;
-  const area = bookingData.area ?? parent.area ?? undefined;
+  const latitude = bookingData.latitude ?? familyClient.latitude ?? undefined;
+  const longitude = bookingData.longitude ?? familyClient.longitude ?? undefined;
+  const address = bookingData.address || familyClient.address;
+  const flatNo = bookingData.flatNo ?? familyClient.flatNo ?? undefined;
+  const building = bookingData.building ?? familyClient.building ?? undefined;
+  const area = bookingData.area ?? familyClient.area ?? undefined;
 
   if (!req.body.caregiverId) {
     if (
@@ -135,7 +135,7 @@ exports.createBooking = async (req, res) => {
 
     const booking = await prisma.booking.create({
       data: {
-        parentId: parent.id,
+        familyClientId: familyClient.id,
         caregiverId: null,
         bookingType: bookingData.bookingType,
         requestedSkill: bookingData.requestedSkill,
@@ -170,7 +170,7 @@ exports.createBooking = async (req, res) => {
         createNotification({
           userId: caregiver.user.id,
           title: "Job request in your area",
-          body: "A parent nearby needs childcare — accept first to get the booking",
+          body: "A family client nearby needs elder care — accept first to get the booking",
           type: "BOOKING_OPEN",
           data: { bookingId: booking.id }
         })
@@ -207,11 +207,11 @@ exports.createBooking = async (req, res) => {
   }
 
   const booking = await prisma.$transaction(async (tx) => {
-    await checkBookingConflict(caregiver.id, bookingData, undefined, parent.id);
+    await checkBookingConflict(caregiver.id, bookingData, undefined, familyClient.id);
 
     return tx.booking.create({
       data: {
-        parentId: parent.id,
+        familyClientId: familyClient.id,
         caregiverId: caregiver.id,
         bookingType: bookingData.bookingType,
         requestedSkill: bookingData.requestedSkill,
@@ -259,10 +259,10 @@ exports.listBookings = async (req, res) => {
   const { status } = req.query;
   let where = {};
 
-  if (req.user.role === "PARENT") {
-    const ho = await prisma.parent.findUnique({ where: { userId: req.user.id } });
-    if (!ho) throw new ApiError(403, "Parent profile required");
-    where.parentId = ho.id;
+  if (req.user.role === "FAMILY_CLIENT" || req.user.role === "PARENT") {
+    const fc = await prisma.familyClient.findUnique({ where: { userId: req.user.id } });
+    if (!fc) throw new ApiError(403, "Family client profile required");
+    where.familyClientId = fc.id;
   } else if (req.user.role === "CAREGIVER") {
     const s = await prisma.caregiver.findUnique({ where: { userId: req.user.id } });
     if (!s) throw new ApiError(403, "Caregiver profile required");
@@ -328,8 +328,8 @@ exports.getBooking = async (req, res) => {
 };
 
 const assertBookingAccess = async (req, booking) => {
-  if (req.user.role === "PARENT") {
-    if (booking.parent.userId !== req.user.id) {
+  if (req.user.role === "FAMILY_CLIENT" || req.user.role === "PARENT") {
+    if (booking.familyClient.userId !== req.user.id) {
       throw new ApiError(403, "Not your booking");
     }
   } else if (req.user.role === "CAREGIVER") {
@@ -413,8 +413,8 @@ exports.confirmBooking = async (req, res) => {
     });
 
     const ownerUserId = (
-      await prisma.parent.findUnique({
-        where: { id: booking.parentId },
+      await prisma.familyClient.findUnique({
+        where: { id: booking.familyClientId },
         select: { userId: true }
       })
     )?.userId;
@@ -457,8 +457,8 @@ exports.confirmBooking = async (req, res) => {
   });
 
   const ownerUserId = (
-    await prisma.parent.findUnique({
-      where: { id: booking.parentId },
+    await prisma.familyClient.findUnique({
+      where: { id: booking.familyClientId },
       select: { userId: true }
     })
   ).userId;
@@ -496,8 +496,8 @@ exports.rejectBooking = async (req, res) => {
   });
 
   const ownerUserId = (
-    await prisma.parent.findUnique({
-      where: { id: booking.parentId },
+    await prisma.familyClient.findUnique({
+      where: { id: booking.familyClientId },
       select: { userId: true }
     })
   )?.userId;
@@ -519,12 +519,12 @@ exports.cancelBooking = async (req, res) => {
   const id = parseInt(req.params.id, 10);
   const booking = await prisma.booking.findUnique({
     where: { id },
-    include: { parent: true }
+    include: { familyClient: true }
   });
 
   if (!booking) throw new ApiError(404, "Booking not found");
-  if (booking.parent.userId !== req.user.id) {
-    throw new ApiError(403, "Only the parent can cancel");
+  if (booking.familyClient.userId !== req.user.id) {
+    throw new ApiError(403, "Only the family client can cancel");
   }
   if (!["PENDING", "CONFIRMED"].includes(booking.status)) {
     throw new ApiError(400, "Cannot cancel booking in current status");
@@ -545,7 +545,7 @@ exports.completeBooking = async (req, res) => {
 
   if (!booking) throw new ApiError(404, "Booking not found");
 
-  const isOwner = booking.parent.userId === req.user.id;
+  const isOwner = booking.familyClient.userId === req.user.id;
   const isCaregiver = booking.caregiver.userId === req.user.id;
   if (!isOwner && !isCaregiver) throw new ApiError(403, "Access denied");
 
@@ -560,7 +560,7 @@ exports.completeBooking = async (req, res) => {
   });
 
   await createNotification({
-    userId: booking.parent.userId,
+    userId: booking.familyClient.userId,
     title: "Booking completed",
     body: "Your booking has been marked completed",
     type: "BOOKING_COMPLETED",
@@ -572,16 +572,16 @@ exports.completeBooking = async (req, res) => {
 
 exports.createReview = async (req, res) => {
   const id = parseInt(req.params.id, 10);
-  const { rating, comment, childSafetyRating } = req.body;
+  const { rating, comment, elderSafetyRating } = req.body;
 
   const booking = await prisma.booking.findUnique({
     where: { id },
-    include: { parent: true, caregiver: true, review: true }
+    include: { familyClient: true, caregiver: true, review: true }
   });
 
   if (!booking) throw new ApiError(404, "Booking not found");
-  if (booking.parent.userId !== req.user.id) {
-    throw new ApiError(403, "Only parent can review");
+  if (booking.familyClient.userId !== req.user.id) {
+    throw new ApiError(403, "Only family client can review");
   }
   if (booking.status !== "COMPLETED") {
     throw new ApiError(400, "Can only review completed bookings");
@@ -590,7 +590,7 @@ exports.createReview = async (req, res) => {
 
   const review = await prisma.$transaction(async (tx) => {
     const r = await tx.review.create({
-      data: { bookingId: id, rating, comment, childSafetyRating: childSafetyRating ?? null }
+      data: { bookingId: id, rating, comment, elderSafetyRating: elderSafetyRating ?? null }
     });
 
     const caregiver = booking.caregiver;
@@ -632,7 +632,7 @@ exports.getBookingTracking = async (req, res) => {
     where: { id },
     include: {
       caregiver: { include: { user: { select: { id: true, name: true } } } },
-      parent: { include: { user: { select: { id: true } } } }
+      familyClient: { include: { user: { select: { id: true } } } }
     }
   });
 
@@ -650,7 +650,7 @@ exports.updateBookingTracking = async (req, res) => {
     where: { id },
     include: {
       caregiver: { include: { user: { select: { id: true, name: true } } } },
-      parent: { include: { user: { select: { id: true } } } }
+      familyClient: { include: { user: { select: { id: true } } } }
     }
   });
 
@@ -673,9 +673,9 @@ exports.updateBookingTracking = async (req, res) => {
     }
   });
 
-  if (firstShare && booking.parent?.user?.id) {
+  if (firstShare && booking.familyClient?.user?.id) {
     await createNotification({
-      userId: booking.parent.user.id,
+      userId: booking.familyClient.user.id,
       title: "Caregiver is on the way",
       body: `${booking.caregiver?.user?.name || "Your caregiver"} started sharing live location — open your booking to track on the map`,
       type: "HELPER_ON_WAY",
@@ -719,7 +719,7 @@ exports.markArrived = async (req, res) => {
   const { expiresAt } = await issueWorkStartOtp({
     booking,
     caregiverUser: caregiver.user,
-    ownerUserId: booking.parent.userId
+    ownerUserId: booking.familyClient.userId
   });
 
   const refreshed = await prisma.booking.findUnique({
@@ -730,7 +730,7 @@ exports.markArrived = async (req, res) => {
 
   sendSuccess(res, {
     booking: enriched,
-    message: "Care-start OTP sent to parent. Ask them for the 4-digit code.",
+    message: "Care-start OTP sent to family client. Ask them for the 4-digit code.",
     otpExpiresAt: expiresAt.toISOString()
   });
 };
@@ -787,9 +787,9 @@ exports.verifyWorkOtp = async (req, res) => {
     return e;
   });
 
-  if (booking.parent?.userId) {
+  if (booking.familyClient?.userId) {
     await createNotification({
-      userId: booking.parent.userId,
+      userId: booking.familyClient.userId,
       title: "Caregiver has arrived",
       body: `${caregiver.user?.name || "Your caregiver"} started work at your location`,
       type: "BOOKING_ACTIVE",

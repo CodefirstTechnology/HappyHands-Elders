@@ -25,12 +25,12 @@ export default function ServantDetailScreen() {
     if (liveLocation?.latitude != null && liveLocation?.longitude != null) {
       return liveLocation;
     }
-    const ho = user?.parent;
+    const ho = user?.familyClient;
     if (ho?.latitude != null && ho?.longitude != null) {
       return { latitude: ho.latitude, longitude: ho.longitude };
     }
     return null;
-  }, [liveLocation, user?.parent]);
+  }, [liveLocation, user?.familyClient]);
 
   const { data: servant, isLoading, error } = useQuery({
     queryKey: ['caregiver', id, searchLocation?.latitude, searchLocation?.longitude],

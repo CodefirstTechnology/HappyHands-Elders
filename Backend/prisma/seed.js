@@ -13,18 +13,18 @@ const toSkillCode = (label) =>
 async function main() {
   await seedRoles(prisma);
 
-  const password = await bcrypt.hash("ChildCare@123", 12);
+  const password = await bcrypt.hash("ElderCare@123", 12);
 
   const adminUser = await prisma.user.upsert({
-    where: { email: "admin@childcare.com" },
-    update: {},
+    where: { email: "admin@eldercare.com" },
+    update: { email: "admin@eldercare.com" },
     create: {
       name: "Admin User",
-      email: "admin@childcare.com",
+      email: "admin@eldercare.com",
       password,
       roleId: ROLE_IDS.ADMIN,
       coordinator: {
-        create: { agencyName: "ChildCare Admin", city: "Mumbai" }
+        create: { agencyName: "ElderCare Admin", city: "Mumbai" }
       }
     },
     include: { coordinator: true }
@@ -34,44 +34,39 @@ async function main() {
     await prisma.coordinator.create({
       data: {
         userId: adminUser.id,
-        agencyName: "ChildCare Admin",
+        agencyName: "ElderCare Admin",
         city: "Mumbai"
       }
     });
   }
 
   await prisma.user.upsert({
-    where: { email: "coordinator@childcare.com" },
-    update: {},
+    where: { email: "coordinator@eldercare.com" },
+    update: { email: "coordinator@eldercare.com" },
     create: {
       name: "Demo Coordinator",
-      email: "coordinator@childcare.com",
+      email: "coordinator@eldercare.com",
       phone: "9000000001",
       password,
       roleId: ROLE_IDS.COORDINATOR,
       coordinator: {
-        create: { agencyName: "ChildCare Agency", city: "Mumbai" }
+        create: { agencyName: "ElderCare Agency", city: "Mumbai" }
       }
     },
     include: { coordinator: true }
   });
 
-  const childcareSkillNames = [
-    "Newborn care (0–3 months)",
-    "Infant care (3–12 months)",
-    "Toddler care (1–3 years)",
-    "Night nanny / overnight baby care",
-    "Baby feeding & nutrition",
-    "Baby sleep routines",
-    "Diaper & hygiene care",
-    "Premature / NICU baby care",
-    "Twin & multiple babies",
-    "Infant CPR & first aid certified",
-    "Breastfeeding support",
-    "Colic & reflux care"
+  const eldercareSkillNames = [
+    "Companion Care",
+    "Personal Hygiene Assistance",
+    "Medication Reminders",
+    "Mobility Assistance",
+    "Dementia Care",
+    "Palliative Care",
+    "Emergency Response"
   ];
 
-  const defaultSkills = childcareSkillNames.map((name, index) => ({
+  const defaultSkills = eldercareSkillNames.map((name, index) => ({
     label: name,
     sortOrder: index + 1,
     code: toSkillCode(name)
@@ -93,11 +88,11 @@ async function main() {
   });
 
   console.log("Seed complete:");
-  console.log("  Admin: admin@childcare.com / ChildCare@123");
-  console.log("  Coordinator: coordinator@childcare.com / ChildCare@123");
-  console.log(`  Skills: ${defaultSkills.length} childcare skills`);
+  console.log("  Admin: admin@eldercare.com / ElderCare@123");
+  console.log("  Coordinator: coordinator@eldercare.com / ElderCare@123");
+  console.log(`  Skills: ${defaultSkills.length} eldercare skills`);
   console.log("  Default caregiver password reference: Caregiver@123");
-  console.log("  Register parents via POST /api/v1/auth/register-parent");
+  console.log("  Register family clients via POST /api/v1/auth/register-parent");
 }
 
 main()

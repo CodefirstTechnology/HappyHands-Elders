@@ -5,48 +5,56 @@ const ROLE_IDS = {
   ADMIN: 1,
   COORDINATOR: 2,
   CAREGIVER: 3,
-  PARENT: 4
+  FAMILY_CLIENT: 4
 };
 
 const ROLE_CODES = {
   1: "ADMIN",
   2: "COORDINATOR",
   3: "CAREGIVER",
-  4: "PARENT"
+  4: "FAMILY_CLIENT"
 };
 
 const MASTER_ROLES = [
   { id: ROLE_IDS.ADMIN, code: "ADMIN", label: "Admin" },
   { id: ROLE_IDS.COORDINATOR, code: "COORDINATOR", label: "Coordinator" },
   { id: ROLE_IDS.CAREGIVER, code: "CAREGIVER", label: "Caregiver" },
-  { id: ROLE_IDS.PARENT, code: "PARENT", label: "Parent" }
+  { id: ROLE_IDS.FAMILY_CLIENT, code: "FAMILY_CLIENT", label: "Family Client" }
 ];
 
 const userWithRoleInclude = { role: true };
 
+const normalizeRoleCode = (role) => {
+  if (role === "PARENT") return "FAMILY_CLIENT";
+  return role;
+};
+
 const getRoleCode = (user) => {
   if (!user) return null;
-  if (typeof user.role === "string") return user.role;
-  return user.role?.code ?? ROLE_CODES[user.roleId] ?? null;
+  if (typeof user.role === "string") return normalizeRoleCode(user.role);
+  return normalizeRoleCode(user.role?.code ?? ROLE_CODES[user.roleId] ?? null);
 };
 
 const resolveRoleId = (codeOrId) => {
   if (typeof codeOrId === "number") return codeOrId;
-  const entry = MASTER_ROLES.find((r) => r.code === codeOrId);
+  const normalized = normalizeRoleCode(codeOrId);
+  const entry = MASTER_ROLES.find((r) => r.code === normalized);
   return entry?.id ?? null;
 };
 
 const roleWhereByCode = (code) =>
-  code ? { role: { code } } : {};
+  code ? { role: { code: normalizeRoleCode(code) } } : {};
 
 const serializeUser = (user) => {
   if (!user) return user;
-  const { password, role: roleRelation, ...rest } = user;
+  const { password, role: roleRelation, parent, familyClient, ...rest } = user;
+  const profile = familyClient ?? parent ?? null;
   const role = getRoleCode(user);
   return {
     ...rest,
     role,
     roleId: user.roleId ?? roleRelation?.id ?? resolveRoleId(role),
+    ...(profile ? { familyClient: profile } : {}),
     ...(roleRelation
       ? {
           roleDetail: {
@@ -74,6 +82,7 @@ module.exports = {
   ROLE_CODES,
   MASTER_ROLES,
   userWithRoleInclude,
+  normalizeRoleCode,
   getRoleCode,
   resolveRoleId,
   roleWhereByCode,

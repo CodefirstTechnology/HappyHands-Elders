@@ -1,5 +1,6 @@
 {
-  "name": "childcare-coordinator-portal",
+  "name": "eldercare-coordinator-portal",
+  "description": "ElderCare coordinator onboarding and admin portal",
   "private": true,
   "version": "0.0.0",
   "type": "module",

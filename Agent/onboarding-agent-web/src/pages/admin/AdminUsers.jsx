@@ -19,7 +19,8 @@ import {
 
 const ROLE_OPTIONS = [
   ['', 'All roles'],
-  ['PARENT', 'House owners'],
+  ['PARENT', 'Family clients'],
+  ['FAMILY_CLIENT', 'Family clients'],
   ['CAREGIVER', 'Servants'],
   ['COORDINATOR', 'Agents'],
   ['ADMIN', 'Admins'],
@@ -32,9 +33,10 @@ function displayName(user) {
   return 'Unnamed user'
 }
 
-function parentMeta(user) {
-  if (user?.role !== 'PARENT') return null
-  const parts = [user.parent?.city, user.parent?.address].filter(Boolean)
+function familyClientMeta(user) {
+  if (user?.role !== 'PARENT' && user?.role !== 'FAMILY_CLIENT') return null
+  const fc = user.familyClient || user.parent
+  const parts = [fc?.city, fc?.address].filter(Boolean)
   return parts.length ? parts.join(' · ') : null
 }
 
@@ -85,7 +87,8 @@ export default function AdminUsers() {
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <StatCard label="Total users" value={total} />
           <StatCard
-            label="House owners"
+            label="Family clients"
+            label="Family clients"
             value={stats?.totalParents ?? '—'}
             accent="text-blue-600"
           />
@@ -137,8 +140,8 @@ export default function AdminUsers() {
                       {u.phone && (
                         <p className="text-xs text-on-surface-variant">{u.phone}</p>
                       )}
-                      {parentMeta(u) && (
-                        <p className="text-xs text-on-surface-variant">{parentMeta(u)}</p>
+                      {familyClientMeta(u) && (
+                        <p className="text-xs text-on-surface-variant">{familyClientMeta(u)}</p>
                       )}
                     </div>
                   </div>
@@ -166,8 +169,8 @@ export default function AdminUsers() {
                     <Avatar name={displayName(u)} />
                     <div>
                       <span className="font-semibold text-primary">{displayName(u)}</span>
-                      {parentMeta(u) && (
-                        <p className="text-xs text-on-surface-variant">{parentMeta(u)}</p>
+                      {familyClientMeta(u) && (
+                        <p className="text-xs text-on-surface-variant">{familyClientMeta(u)}</p>
                       )}
                     </div>
                   </div>

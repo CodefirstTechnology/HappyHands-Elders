@@ -48,25 +48,25 @@ model Role {
 }
 
 model User {
-  id                   Int            @id @default(autoincrement())
-  name                 String
-  email                String         @unique
-  phone                String?        @unique
-  password             String
-  roleId               Int            @default(4)
-  role                 Role           @relation(fields: [roleId], references: [id])
-  isActive             Boolean        @default(true)
-  coordinatorSetPassword Boolean      @default(false)
-  fcmToken             String?
+  id                     Int            @id @default(autoincrement())
+  name                   String
+  email                  String         @unique
+  phone                  String?        @unique
+  password               String
+  roleId                 Int            @default(4)
+  role                   Role           @relation(fields: [roleId], references: [id])
+  isActive               Boolean        @default(true)
+  coordinatorSetPassword Boolean        @default(false)
+  fcmToken               String?
   preferredLanguage      String         @default("en")
-  createdAt            DateTime       @default(now())
-  updatedAt            DateTime       @updatedAt
+  createdAt              DateTime       @default(now())
+  updatedAt              DateTime       @updatedAt
 
-  parent         Parent?
-  caregiver      Caregiver?
-  coordinator    Coordinator?
-  refreshTokens  RefreshToken[]
-  notifications  Notification[]
+  familyClient  FamilyClient?
+  caregiver     Caregiver?
+  coordinator   Coordinator?
+  refreshTokens RefreshToken[]
+  notifications Notification[]
 
   @@index([roleId])
 }
@@ -80,83 +80,87 @@ model RefreshToken {
   createdAt DateTime @default(now())
 }
 
-model Parent {
-  id                  Int       @id @default(autoincrement())
-  userId              Int       @unique
-  user                User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  address             String?
-  flatNo              String?
-  building            String?
-  area                String?
-  city                String?
-  latitude            Float?
-  longitude           Float?
-  numberOfChildren    Int?
-  childrenAges        Int[]
-  specialRequirements String?
-  bookings            Booking[]
-  createdAt           DateTime  @default(now())
-  updatedAt           DateTime  @updatedAt
+model FamilyClient {
+  id            Int       @id @default(autoincrement())
+  userId        Int       @unique
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  address       String?
+  flatNo        String?
+  building      String?
+  area          String?
+  city          String?
+  latitude      Float?
+  longitude     Float?
+  eldersCount   Int       @default(1)
+  elderAgeRange String?
+  mobilityLevel String?
+  medicalNotes  String?
+  bookings      Booking[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@map("Parent")
 }
 
 model Caregiver {
-  id                 Int                       @id @default(autoincrement())
-  userId             Int                       @unique
-  user               User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  coordinatorId      Int?
-  coordinator        Coordinator?              @relation(fields: [coordinatorId], references: [id])
-  registrationSource CaregiverRegistrationSource @default(COORDINATOR)
-  verificationStatus VerificationStatus        @default(PENDING)
-  verifiedAt         DateTime?
-  rejectionReason    String?
-  profilePhoto       String?
-  idProofUrl         String?
-  idProofType        String?
-  skills             CaregiverSkill[]
-  experience         Int?
-  hourlyRate         Float?
-  monthlyRate        Float?
-  bio                String?
-  rating             Float                     @default(0)
-  totalRatings       Int                       @default(0)
-  availableFrom      String?
-  availableTo        String?
-  workingDays        String?
-  offersSession      Boolean                   @default(true)
-  offersMonthly      Boolean                   @default(true)
-  weekOffDays        String?
-  hoursPerDay        Float?
-  availabilityNotes  String?
-  address            String?
-  city               String?
-  latitude           Float?
-  longitude          Float?
-  ageRangesServed    String[]
-  maxChildren        Int?
-  hasCprCert         Boolean                   @default(false)
-  hasFirstAidCert    Boolean                   @default(false)
-  childcareNote      String?
-  bankAccountHolder  String?
-  bankAccountNumber  String?
-  bankName           String?
-  bankIfsc           String?
-  bankUpiId          String?
-  aadhaarVerified          Boolean   @default(false)
-  aadhaarVerificationType  String?
-  aadhaarVerifiedAt        DateTime?
-  aadhaarVerifiedName      String?
-  aadhaarVerifiedDob       String?
-  aadhaarVerifiedGender    String?
-  aadhaarVerifiedAddress   String?
-  aadhaarPhotoUrl          String?
-  aadhaarReferenceId       String?
-  aadhaarNameMatch         Boolean?
-  phoneVerified            Boolean   @default(false)
-  bookings           Booking[]
-  timeEntries        TimeEntry[]
-  zones              Zone[]
-  createdAt          DateTime                  @default(now())
-  updatedAt          DateTime                  @updatedAt
+  id                           Int                         @id @default(autoincrement())
+  userId                       Int                         @unique
+  user                         User                        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  coordinatorId                Int?
+  coordinator                  Coordinator?                @relation(fields: [coordinatorId], references: [id])
+  registrationSource           CaregiverRegistrationSource @default(COORDINATOR)
+  verificationStatus           VerificationStatus          @default(PENDING)
+  verifiedAt                   DateTime?
+  rejectionReason              String?
+  profilePhoto                 String?
+  idProofUrl                   String?
+  idProofType                  String?
+  skills                       CaregiverSkill[]
+  experience                   Int?
+  hourlyRate                   Float?
+  monthlyRate                  Float?
+  bio                          String?
+  rating                       Float                       @default(0)
+  totalRatings                 Int                         @default(0)
+  availableFrom                String?
+  availableTo                  String?
+  workingDays                  String?
+  offersSession                Boolean                     @default(true)
+  offersMonthly                Boolean                     @default(true)
+  weekOffDays                  String?
+  hoursPerDay                  Float?
+  availabilityNotes            String?
+  address                      String?
+  city                         String?
+  latitude                     Float?
+  longitude                    Float?
+  ageRangesServed              String[]
+  maxChildren                  Int?
+  emergencyResponseCertified   Boolean                     @default(false)
+  dementiaCareCertified        Boolean                     @default(false)
+  fallCareCertified            Boolean                     @default(false)
+  eldercareNote                String?
+  bankAccountHolder            String?
+  bankAccountNumber            String?
+  bankName                     String?
+  bankIfsc                     String?
+  bankUpiId                    String?
+  aadhaarVerified              Boolean                     @default(false)
+  aadhaarVerificationType      String?
+  aadhaarVerifiedAt            DateTime?
+  aadhaarVerifiedName          String?
+  aadhaarVerifiedDob           String?
+  aadhaarVerifiedGender        String?
+  aadhaarVerifiedAddress       String?
+  aadhaarPhotoUrl              String?
+  aadhaarReferenceId           String?
+  aadhaarNameMatch             Boolean?
+  phoneVerified                Boolean                     @default(false)
+  bookings                     Booking[]
+  timeEntries                  TimeEntry[]
+  zones                        Zone[]
+  createdAt                    DateTime                    @default(now())
+  updatedAt                    DateTime                    @updatedAt
 }
 
 model Zone {
@@ -212,8 +216,8 @@ model Coordinator {
 
 model Booking {
   id                Int           @id @default(autoincrement())
-  parentId          Int
-  parent            Parent        @relation(fields: [parentId], references: [id])
+  familyClientId    Int           @map("parentId")
+  familyClient      FamilyClient  @relation(fields: [familyClientId], references: [id])
   caregiverId       Int?
   caregiver         Caregiver?    @relation(fields: [caregiverId], references: [id])
   bookingType       BookingType
@@ -288,7 +292,7 @@ model Review {
   bookingId         Int      @unique
   booking           Booking  @relation(fields: [bookingId], references: [id])
   rating            Float
-  childSafetyRating Int?
+  elderSafetyRating Int?     @map("childSafetyRating")
   comment           String?
   createdAt         DateTime @default(now())
 }

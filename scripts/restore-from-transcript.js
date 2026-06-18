@@ -4,11 +4,11 @@ const path = require("path");
 const transcripts = [
   path.join(
     process.env.USERPROFILE || "",
-    ".cursor/projects/d-Desktop-StaffEra/agent-transcripts/948d4085-578e-4c4d-879a-3391fe9551e9/948d4085-578e-4c4d-879a-3391fe9551e9.jsonl"
+    ".cursor/projects/d-Desktop-Eldercare/agent-transcripts/948d4085-578e-4c4d-879a-3391fe9551e9/948d4085-578e-4c4d-879a-3391fe9551e9.jsonl"
   ),
   path.join(
     process.env.USERPROFILE || "",
-    ".cursor/projects/d-Desktop-StaffEra/agent-transcripts/8c0568fc-1e75-468b-be94-c4d0c8dabb92/8c0568fc-1e75-468b-be94-c4d0c8dabb92.jsonl"
+    ".cursor/projects/d-Desktop-Eldercare/agent-transcripts/8c0568fc-1e75-468b-be94-c4d0c8dabb92/8c0568fc-1e75-468b-be94-c4d0c8dabb92.jsonl"
   )
 ];
 
@@ -18,15 +18,23 @@ const ops = [];
 
 const normalizePath = (p) => {
   const fixed = p.replace(/\\/g, "/");
-  const idx = fixed.toLowerCase().indexOf("/staffera/");
-  if (idx >= 0) return path.join(repoRoot, fixed.slice(idx + "/staffera/".length));
+  const idx = fixed.toLowerCase().indexOf("/eldercare/");
+  if (idx >= 0) return path.join(repoRoot, fixed.slice(idx + "/eldercare/".length));
+  if (fixed.includes("Caregiver App/caregiver-app")) {
+    const i = fixed.indexOf("Caregiver App/caregiver-app");
+    return path.join(repoRoot, fixed.slice(i));
+  }
+  if (fixed.includes("Family App/family-app")) {
+    const i = fixed.indexOf("Family App/family-app");
+    return path.join(repoRoot, fixed.slice(i));
+  }
   if (fixed.includes("Servant/servant-app")) {
     const i = fixed.indexOf("Servant/servant-app");
-    return path.join(repoRoot, fixed.slice(i));
+    return path.join(repoRoot, "Caregiver App/caregiver-app", fixed.slice(i + "Servant/servant-app/".length));
   }
   if (fixed.includes("House Owner App/house-owner-app")) {
     const i = fixed.indexOf("House Owner App/house-owner-app");
-    return path.join(repoRoot, fixed.slice(i));
+    return path.join(repoRoot, "Family App/family-app", fixed.slice(i + "House Owner App/house-owner-app/".length));
   }
   return null;
 };
@@ -52,7 +60,7 @@ for (const transcript of transcripts) {
       const { name, input = {} } = block;
       const target = normalizePath(input.path || "");
       if (!target) continue;
-      if (!target.includes("servant-app") && !target.includes("house-owner-app")) continue;
+      if (!target.includes("caregiver-app") && !target.includes("family-app")) continue;
 
       if (name === "Write" && input.contents) {
         ops.push({ type: "write", target, contents: input.contents });
@@ -87,11 +95,10 @@ for (const [filePath, contents] of files) {
   console.log("restored:", path.relative(repoRoot, filePath));
 }
 
-// .env files (not in transcript — recreate)
 const envContent = "EXPO_PUBLIC_API_BASE_URL=http://localhost:5000/api/v1\n";
 for (const app of [
-  "Servant/servant-app/.env",
-  "House Owner App/house-owner-app/.env"
+  "Caregiver App/caregiver-app/.env",
+  "Family App/family-app/.env"
 ]) {
   const p = path.join(repoRoot, app);
   if (!fs.existsSync(p)) {

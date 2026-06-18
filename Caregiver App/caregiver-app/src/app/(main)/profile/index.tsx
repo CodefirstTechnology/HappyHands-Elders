@@ -1,6 +1,6 @@
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Switch, Alert } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -19,10 +19,30 @@ import { formatSkillLabel } from '@/lib/skills';
 type Zone = { id: number; name: string; city?: string | null };
 type Skill = { skillName: string };
 
+type CaregiverProfile = {
+  ageRangesServed?: string[];
+  maxChildren?: number | null;
+  emergencyResponseCertified?: boolean;
+  dementiaCareCertified?: boolean;
+  fallCareCertified?: boolean;
+  eldercareNote?: string | null;
+  verificationStatus: string;
+  bio?: string | null;
+  rating?: number;
+  totalRatings?: number;
+  hourlyRate?: number | null;
+  monthlyRate?: number | null;
+  experience?: number | null;
+  zones?: Zone[];
+  skills?: Skill[];
+  user?: { name: string; email: string; phone?: string | null };
+};
+
 export default function ProfileScreen() {
   const { t } = useTranslation();
   const { user, logout, refreshUser } = useAuthStore();
   const qc = useQueryClient();
+  const [savingCerts, setSavingCerts] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -35,25 +55,25 @@ export default function ProfileScreen() {
     queryKey: ['caregiver-profile'],
     queryFn: async () => {
       const res = await api.get('/caregivers/me');
-      return res.data.data.caregiver as {
-        ageRangesServed?: string[];
-        maxChildren?: number | null;
-        hasCprCert?: boolean;
-        hasFirstAidCert?: boolean;
-        childcareNote?: string | null;
-        verificationStatus: string;
-        bio?: string | null;
-        rating?: number;
-        totalRatings?: number;
-        hourlyRate?: number | null;
-        monthlyRate?: number | null;
-        experience?: number | null;
-        zones?: Zone[];
-        skills?: Skill[];
-        user?: { name: string; email: string; phone?: string | null };
-      };
+      return res.data.data.caregiver as CaregiverProfile;
     },
   });
+
+  const updateCert = async (
+    field: 'emergencyResponseCertified' | 'dementiaCareCertified' | 'fallCareCertified',
+    value: boolean,
+  ) => {
+    setSavingCerts(true);
+    try {
+      await api.patch('/caregivers/me', { [field]: value });
+      await qc.invalidateQueries({ queryKey: ['caregiver-profile'] });
+    } catch (e: unknown) {
+      const err = e as { response?: { data?: { message?: string } } };
+      Alert.alert(t('errors.generic'), err.response?.data?.message || t('errors.couldNotSave'));
+    } finally {
+      setSavingCerts(false);
+    }
+  };
 
   const zones: Zone[] = profile?.zones || [];
   const skills = profile?.skills || [];
@@ -184,36 +204,49 @@ export default function ProfileScreen() {
         </GlassCard>
       ) : null}
 
-      {(profile?.ageRangesServed?.length ||
-        profile?.maxChildren != null ||
-        profile?.hasCprCert ||
-        profile?.hasFirstAidCert ||
-        profile?.childcareNote) ? (
-        <GlassCard style={styles.sectionCard}>
-          <View style={styles.sectionHead}>
-            <View style={styles.sectionIcon}>
-              <MaterialIcons name="child-care" size={20} color={Stitch.colors.secondary} />
-            </View>
-            <Text style={styles.sectionTitle}>{t('caregiverProfile.childcareDetails')}</Text>
+      <GlassCard style={styles.sectionCard}>
+        <View style={styles.sectionHead}>
+          <View style={styles.sectionIcon}>
+            <MaterialIcons name="elderly" size={20} color={Stitch.colors.secondary} />
           </View>
-          {profile?.ageRangesServed?.length ? (
-            <Text style={styles.bio}>
-              {t('caregiverProfile.ageRanges')}: {profile.ageRangesServed.join(', ')}
-            </Text>
-          ) : null}
-          {profile?.maxChildren != null ? (
-            <Text style={styles.bio}>{t('caregiverProfile.maxChildren')}: {profile.maxChildren}</Text>
-          ) : null}
+          <Text style={styles.sectionTitle}>{t('caregiverProfile.eldercareDetails')}</Text>
+        </View>
+        {profile?.ageRangesServed?.length ? (
           <Text style={styles.bio}>
-            {profile?.hasCprCert ? `✓ ${t('caregiverProfile.cprCert')}` : ''}
-            {profile?.hasCprCert && profile?.hasFirstAidCert ? ' · ' : ''}
-            {profile?.hasFirstAidCert ? `✓ ${t('caregiverProfile.firstAidCert')}` : ''}
+            {t('caregiverProfile.ageRanges')}: {profile.ageRangesServed.join(', ')}
           </Text>
-          {profile?.childcareNote ? (
-            <Text style={[styles.bio, { marginTop: 8 }]}>{profile.childcareNote}</Text>
-          ) : null}
-        </GlassCard>
-      ) : null}
+        ) : null}
+        {profile?.maxChildren != null ? (
+          <Text style={styles.bio}>{t('caregiverProfile.maxElders')}: {profile.maxChildren}</Text>
+        ) : null}
+        <View style={styles.certToggleRow}>
+          <Text style={styles.certLabel}>{t('caregiverProfile.emergencyResponseCert')}</Text>
+          <Switch
+            value={!!profile?.emergencyResponseCertified}
+            onValueChange={(v) => void updateCert('emergencyResponseCertified', v)}
+            disabled={savingCerts}
+          />
+        </View>
+        <View style={styles.certToggleRow}>
+          <Text style={styles.certLabel}>{t('caregiverProfile.dementiaCareCert')}</Text>
+          <Switch
+            value={!!profile?.dementiaCareCertified}
+            onValueChange={(v) => void updateCert('dementiaCareCertified', v)}
+            disabled={savingCerts}
+          />
+        </View>
+        <View style={styles.certToggleRow}>
+          <Text style={styles.certLabel}>{t('caregiverProfile.fallCareCert')}</Text>
+          <Switch
+            value={!!profile?.fallCareCertified}
+            onValueChange={(v) => void updateCert('fallCareCertified', v)}
+            disabled={savingCerts}
+          />
+        </View>
+        {profile?.eldercareNote ? (
+          <Text style={[styles.bio, { marginTop: 8 }]}>{profile.eldercareNote}</Text>
+        ) : null}
+      </GlassCard>
 
       <GlassCard style={styles.languageCard}>
         <LanguageSelector showTitle />
@@ -369,6 +402,15 @@ const styles = StyleSheet.create({
   },
   skillChipText: { fontSize: 13, fontWeight: '600', color: Stitch.colors.primary },
   bio: { fontSize: 14, lineHeight: 22, color: Stitch.colors.onSurfaceVariant },
+  certToggleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 10,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: Stitch.colors.outlineVariant,
+  },
+  certLabel: { fontSize: 14, fontWeight: '600', color: Stitch.colors.onBackground, flex: 1 },
   zoneEmpty: { fontSize: 13, color: Stitch.colors.onSurfaceVariant, lineHeight: 20, marginBottom: 4 },
   zoneChips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 4 },
   zoneChip: {
