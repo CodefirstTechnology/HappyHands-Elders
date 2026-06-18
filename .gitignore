@@ -1,0 +1,138 @@
+# =========================
+# Dependencies
+# =========================
+node_modules/
+.pnp
+.pnp.js
+
+# =========================
+# Environment & secrets
+# =========================
+.env
+.env.*
+!.env.example
+!.env*.example
+
+# =========================
+# Logs
+# =========================
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# =========================
+# Build & output
+# =========================
+dist/
+dist-ssr/
+build/
+out/
+.next/
+.nuxt/
+.cache/
+.parcel-cache/
+.turbo/
+*.tsbuildinfo
+
+# Vite
+*.local
+
+# Expo / React Native
+.expo/
+.expo-shared/
+web-build/
+expo-env.d.ts
+.metro-health-check*
+
+# Generated native folders (Expo prebuild)
+ios/
+android/
+
+# =========================
+# Testing & coverage
+# =========================
+coverage/
+.nyc_output/
+*.lcov
+
+# =========================
+# Runtime & temp files
+# =========================
+tmp/
+temp/
+uploads/
+*.pid
+*.seed
+*.pid.lock
+
+# Redis
+dump.rdb
+
+# PM2
+.pm2/
+
+# =========================
+# OS files
+# =========================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+# =========================
+# IDE & editors
+# =========================
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json.example
+.idea/
+*.swp
+*.swo
+*~
+*.sublime-project
+*.sublime-workspace
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# =========================
+# Security & certificates
+# =========================
+*.pem
+*.key
+*.p8
+*.p12
+*.jks
+*.mobileprovision
+*.orig.*
+
+# =========================
+# Docker (local overrides)
+# =========================
+docker-compose.override.yml
+.docker/
+
+
+# =========================
+# Stitch design exports (large reference assets)
+# =========================
+stitch_staffera_premium_service_app/
+stitch_staffera_premium_service_app.zip
+
+# =========================
+# Misc
+# =========================
+.eslintcache
+.prettiercache
+*.tgz
+.vercel
+.netlify

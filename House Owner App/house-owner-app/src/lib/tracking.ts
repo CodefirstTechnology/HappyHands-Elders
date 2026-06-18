@@ -1,0 +1,20 @@
+import api from '@/lib/api';
+
+export type BookingTracking = {
+  status: string;
+  home: {
+    address?: string | null;
+    latitude?: number | null;
+    longitude?: number | null;
+  };
+  caregiver: {
+    latitude: number;
+    longitude: number;
+    updatedAt: string;
+  } | null;
+};
+
+export async function fetchBookingTracking(bookingId: number): Promise<BookingTracking> {
+  const res = await api.get(`/bookings/${bookingId}/tracking`);
+  return res.data.data as BookingTracking;
+}

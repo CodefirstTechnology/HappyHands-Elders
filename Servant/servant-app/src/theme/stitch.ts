@@ -1,0 +1,73 @@
+/**
+ * ChildCare Stitch design tokens
+ */
+export const Stitch = {
+  colors: {
+    background: '#fcf8ff',
+    surface: '#fcf8ff',
+    surfaceLow: '#f5f2fb',
+    surfaceContainer: '#f0ecf5',
+    surfaceContainerHigh: '#eae7f0',
+    surfaceHighest: '#ffffff',
+    onBackground: '#1b1b21',
+    onSurfaceVariant: '#464652',
+    outline: '#777683',
+    outlineVariant: '#c7c5d4',
+    primary: '#1B6CA8',
+    primaryContainer: '#155a8c',
+    primaryFixed: '#e1f0fa',
+    onPrimary: '#ffffff',
+    secondary: '#2CA58D',
+    secondaryContainer: '#249178',
+    secondaryFixed: '#e0f5f0',
+    tertiary: '#491a00',
+    tertiaryContainer: '#6c2a00',
+    tertiaryFixed: '#ffdbcb',
+    onTertiaryContainer: '#f19160',
+    error: '#ba1a1a',
+    errorContainer: '#ffdad6',
+    success: '#2CA58D',
+    successBg: 'rgba(44, 165, 141, 0.12)',
+    gradientStart: '#1B6CA8',
+    gradientEnd: '#2CA58D',
+    shadowTint: 'rgba(27, 108, 168, 0.08)',
+    shadowGlow: 'rgba(44, 165, 141, 0.25)',
+  },
+  radius: {
+    sm: 8,
+    md: 12,
+    lg: 16,
+    xl: 24,
+    pill: 9999,
+  },
+  spacing: {
+    unit: 8,
+    gutter: 16,
+    padding: 24,
+    section: 40,
+  },
+  typography: {
+    display: { fontSize: 36, fontWeight: '700' as const, letterSpacing: -0.5 },
+    headline: { fontSize: 24, fontWeight: '700' as const, letterSpacing: -0.3 },
+    title: { fontSize: 18, fontWeight: '600' as const },
+    body: { fontSize: 16, fontWeight: '400' as const, lineHeight: 24 },
+    label: { fontSize: 14, fontWeight: '600' as const },
+    caption: { fontSize: 12, fontWeight: '500' as const },
+  },
+  copy: {
+    trustLine: 'Verified caregivers · Secure payments · Support in English & Hindi',
+    safeData: 'Your profile stays private and encrypted.',
+    rupee: '₹',
+  },
+};
+
+export const StatusColors: Record<string, { bg: string; text: string }> = {
+  PENDING: { bg: 'rgba(241, 145, 96, 0.2)', text: '#6c2a00' },
+  CONFIRMED: { bg: 'rgba(44, 165, 141, 0.15)', text: '#1B6CA8' },
+  ACTIVE: { bg: Stitch.colors.successBg, text: Stitch.colors.success },
+  COMPLETED: { bg: Stitch.colors.surfaceContainer, text: Stitch.colors.onSurfaceVariant },
+  CANCELLED: { bg: Stitch.colors.errorContainer, text: Stitch.colors.error },
+  REJECTED: { bg: Stitch.colors.errorContainer, text: Stitch.colors.error },
+  VERIFIED: { bg: Stitch.colors.successBg, text: Stitch.colors.success },
+  UNDER_REVIEW: { bg: 'rgba(44, 165, 141, 0.15)', text: '#1B6CA8' },
+};

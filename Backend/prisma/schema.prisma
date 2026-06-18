@@ -1,0 +1,306 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum VerificationStatus {
+  PENDING
+  UNDER_REVIEW
+  VERIFIED
+  REJECTED
+}
+
+enum CaregiverRegistrationSource {
+  COORDINATOR
+  SELF
+}
+
+enum BookingType {
+  MONTHLY
+  SESSION
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  ACTIVE
+  COMPLETED
+  CANCELLED
+  REJECTED
+  EXPIRED
+  OTP_PENDING
+  ARRIVED
+}
+
+model Role {
+  id        Int      @id
+  code      String   @unique
+  label     String
+  users     User[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("roles")
+}
+
+model User {
+  id                   Int            @id @default(autoincrement())
+  name                 String
+  email                String         @unique
+  phone                String?        @unique
+  password             String
+  roleId               Int            @default(4)
+  role                 Role           @relation(fields: [roleId], references: [id])
+  isActive             Boolean        @default(true)
+  coordinatorSetPassword Boolean      @default(false)
+  fcmToken             String?
+  preferredLanguage      String         @default("en")
+  createdAt            DateTime       @default(now())
+  updatedAt            DateTime       @updatedAt
+
+  parent         Parent?
+  caregiver      Caregiver?
+  coordinator    Coordinator?
+  refreshTokens  RefreshToken[]
+  notifications  Notification[]
+
+  @@index([roleId])
+}
+
+model RefreshToken {
+  id        Int      @id @default(autoincrement())
+  token     String   @unique
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+model Parent {
+  id                  Int       @id @default(autoincrement())
+  userId              Int       @unique
+  user                User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  address             String?
+  flatNo              String?
+  building            String?
+  area                String?
+  city                String?
+  latitude            Float?
+  longitude           Float?
+  numberOfChildren    Int?
+  childrenAges        Int[]
+  specialRequirements String?
+  bookings            Booking[]
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+}
+
+model Caregiver {
+  id                 Int                       @id @default(autoincrement())
+  userId             Int                       @unique
+  user               User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  coordinatorId      Int?
+  coordinator        Coordinator?              @relation(fields: [coordinatorId], references: [id])
+  registrationSource CaregiverRegistrationSource @default(COORDINATOR)
+  verificationStatus VerificationStatus        @default(PENDING)
+  verifiedAt         DateTime?
+  rejectionReason    String?
+  profilePhoto       String?
+  idProofUrl         String?
+  idProofType        String?
+  skills             CaregiverSkill[]
+  experience         Int?
+  hourlyRate         Float?
+  monthlyRate        Float?
+  bio                String?
+  rating             Float                     @default(0)
+  totalRatings       Int                       @default(0)
+  availableFrom      String?
+  availableTo        String?
+  workingDays        String?
+  offersSession      Boolean                   @default(true)
+  offersMonthly      Boolean                   @default(true)
+  weekOffDays        String?
+  hoursPerDay        Float?
+  availabilityNotes  String?
+  address            String?
+  city               String?
+  latitude           Float?
+  longitude          Float?
+  ageRangesServed    String[]
+  maxChildren        Int?
+  hasCprCert         Boolean                   @default(false)
+  hasFirstAidCert    Boolean                   @default(false)
+  childcareNote      String?
+  bankAccountHolder  String?
+  bankAccountNumber  String?
+  bankName           String?
+  bankIfsc           String?
+  bankUpiId          String?
+  aadhaarVerified          Boolean   @default(false)
+  aadhaarVerificationType  String?
+  aadhaarVerifiedAt        DateTime?
+  aadhaarVerifiedName      String?
+  aadhaarVerifiedDob       String?
+  aadhaarVerifiedGender    String?
+  aadhaarVerifiedAddress   String?
+  aadhaarPhotoUrl          String?
+  aadhaarReferenceId       String?
+  aadhaarNameMatch         Boolean?
+  phoneVerified            Boolean   @default(false)
+  bookings           Booking[]
+  timeEntries        TimeEntry[]
+  zones              Zone[]
+  createdAt          DateTime                  @default(now())
+  updatedAt          DateTime                  @updatedAt
+}
+
+model Zone {
+  id          Int       @id @default(autoincrement())
+  caregiverId Int
+  caregiver   Caregiver @relation(fields: [caregiverId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  city        String?
+  latitude    Float?
+  longitude   Float?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([caregiverId])
+  @@index([name])
+  @@index([city])
+}
+
+model CaregiverSkill {
+  id          Int       @id @default(autoincrement())
+  caregiverId Int
+  caregiver   Caregiver @relation(fields: [caregiverId], references: [id], onDelete: Cascade)
+  skillName   String
+}
+
+model Skill {
+  id        Int      @id @default(autoincrement())
+  code      String   @unique
+  label     String
+  isActive  Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive, sortOrder])
+}
+
+model Coordinator {
+  id              Int         @id @default(autoincrement())
+  userId          Int         @unique
+  user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  agencyName      String?
+  address         String?
+  city            String?
+  latitude        Float?
+  longitude       Float?
+  serviceRadiusKm Float       @default(3)
+  caregivers      Caregiver[]
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+}
+
+model Booking {
+  id                Int           @id @default(autoincrement())
+  parentId          Int
+  parent            Parent        @relation(fields: [parentId], references: [id])
+  caregiverId       Int?
+  caregiver         Caregiver?    @relation(fields: [caregiverId], references: [id])
+  bookingType       BookingType
+  status            BookingStatus @default(PENDING)
+  requestedSkill    String?
+
+  monthlyStartDate DateTime?
+  monthlyEndDate   DateTime?
+  hoursPerDay      Float?
+  workingDays      String?
+
+  sessionDate      DateTime?
+  sessionStartTime String?
+  sessionEndTime   String?
+  sessionHours     Float?
+  sessionSlots     String?
+
+  address              String?
+  flatNo               String?
+  building             String?
+  area                 String?
+  latitude             Float?
+  longitude            Float?
+  caregiverLatitude    Float?
+  caregiverLongitude   Float?
+  caregiverLocationAt  DateTime?
+  totalAmount          Float?
+  isPaid               Boolean       @default(false)
+  paymentId            String?
+  notes                String?
+
+  timeEntries      TimeEntry[]
+  review           Review?
+  workStartedAt    DateTime?
+  workStartOtps    BookingWorkStartOtp[]
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+}
+
+model BookingWorkStartOtp {
+  id         Int       @id @default(autoincrement())
+  bookingId  Int
+  booking    Booking   @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  code       String
+  otpHash    String
+  expiresAt  DateTime
+  sentAt     DateTime  @default(now())
+  attempts   Int       @default(0)
+  verifiedAt DateTime?
+  used       Boolean   @default(false)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@index([bookingId, verifiedAt])
+}
+
+model TimeEntry {
+  id          Int       @id @default(autoincrement())
+  bookingId   Int
+  booking     Booking   @relation(fields: [bookingId], references: [id])
+  caregiverId Int
+  caregiver   Caregiver @relation(fields: [caregiverId], references: [id])
+  clockIn     DateTime
+  clockOut    DateTime?
+  hoursWorked Float?
+  date        DateTime
+  createdAt   DateTime  @default(now())
+}
+
+model Review {
+  id                Int      @id @default(autoincrement())
+  bookingId         Int      @unique
+  booking           Booking  @relation(fields: [bookingId], references: [id])
+  rating            Float
+  childSafetyRating Int?
+  comment           String?
+  createdAt         DateTime @default(now())
+}
+
+model Notification {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  body      String
+  type      String
+  isRead    Boolean  @default(false)
+  data      Json?
+  createdAt DateTime @default(now())
+}

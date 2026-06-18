@@ -1,0 +1,131 @@
+# ChildCare production stack — bind ports to localhost for host nginx reverse proxy.
+# Usage:
+#   cp .env.production.example .env
+#   docker compose --env-file .env up -d --build
+
+name: childcare
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-childcare}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: ${POSTGRES_DB:-childcare}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-childcare} -d ${POSTGRES_DB:-childcare}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks:
+      - childcare
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks:
+      - childcare
+
+  api:
+    build:
+      context: ./Backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 5000
+      TRUST_PROXY: "true"
+      DATABASE_URL: ${DATABASE_URL:-postgresql://${POSTGRES_USER:-childcare}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-childcare}}
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-15m}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:?Set JWT_REFRESH_SECRET in .env}
+      JWT_REFRESH_EXPIRES_IN: ${JWT_REFRESH_EXPIRES_IN:-7d}
+      CLIENT_URL: ${CLIENT_URL:-*}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      FCM_SERVER_KEY: ${FCM_SERVER_KEY:-}
+      UPLOAD_DIR: uploads
+      GOOGLE_MAPS_API_KEY: ${GOOGLE_MAPS_API_KEY:-}
+      GOOGLE_MAP_ID: ${GOOGLE_MAP_ID:-}
+      CAREGIVER_COORDINATOR_RADIUS_KM: ${CAREGIVER_COORDINATOR_RADIUS_KM:-3}
+      MAX_CHILDREN_DEFAULT: ${MAX_CHILDREN_DEFAULT:-4}
+      SMS_PROVIDER: ${SMS_PROVIDER:-log}
+      SMS_DEFAULT_COUNTRY_CODE: ${SMS_DEFAULT_COUNTRY_CODE:-91}
+      MSG91_AUTH_KEY: ${MSG91_AUTH_KEY:-}
+      MSG91_SENDER_ID: ${MSG91_SENDER_ID:-CHLDRA}
+      MSG91_ROUTE: ${MSG91_ROUTE:-4}
+      MSG91_TEMPLATE_ID_CARE_OTP: ${MSG91_TEMPLATE_ID_CARE_OTP:-}
+      TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID:-}
+      TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN:-}
+      TWILIO_FROM: ${TWILIO_FROM:-}
+      SMS_ALLOW_DEV_OTP: ${SMS_ALLOW_DEV_OTP:-false}
+      RATE_LIMIT_WINDOW_MS: ${RATE_LIMIT_WINDOW_MS:-900000}
+      RATE_LIMIT_MAX: ${RATE_LIMIT_MAX:-800}
+    volumes:
+      - uploads_data:/app/uploads
+    ports:
+      - "127.0.0.1:${CHILDCARE_API_PORT:-15000}:5000"
+    networks:
+      - childcare
+
+  website:
+    build:
+      context: ./ChildCare_website
+      dockerfile: Dockerfile
+      args:
+        VITE_PARENT_APP_URL: ${VITE_PARENT_APP_URL:-#}
+        VITE_CAREGIVER_APP_URL: ${VITE_CAREGIVER_APP_URL:-#}
+        VITE_COORDINATOR_PORTAL_URL: ${VITE_COORDINATOR_PORTAL_URL:-#}
+        VITE_PLAY_STORE_PARENT: ${VITE_PLAY_STORE_PARENT:-#}
+        VITE_PLAY_STORE_CAREGIVER: ${VITE_PLAY_STORE_CAREGIVER:-#}
+        VITE_APP_STORE_PARENT: ${VITE_APP_STORE_PARENT:-#}
+        VITE_APP_STORE_CAREGIVER: ${VITE_APP_STORE_CAREGIVER:-#}
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${CHILDCARE_WEBSITE_PORT:-15001}:80"
+    networks:
+      - childcare
+
+  coordinator-portal:
+    build:
+      context: ./Agent/onboarding-agent-web
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:?Set VITE_API_BASE_URL in .env}
+        VITE_API_HOST: ${VITE_API_HOST:-}
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      - "127.0.0.1:${CHILDCARE_COORDINATOR_PORT:-15002}:80"
+    networks:
+      - childcare
+
+networks:
+  childcare:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:
+  uploads_data:

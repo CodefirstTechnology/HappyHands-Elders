@@ -1,0 +1,47 @@
+{
+  "name": "childcare-backend",
+  "version": "1.0.0",
+  "description": "ChildCare platform API — parents, caregivers, and coordinators",
+  "main": "index.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "seed": "node prisma/seed.js",
+    "seed:caregivers": "node prisma/seed-servants.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": ["childcare", "caregiver", "parent"],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@prisma/client": "^5.22.0",
+    "@xmldom/xmldom": "^0.9.10",
+    "adm-zip": "^0.5.17",
+    "bcryptjs": "^3.0.3",
+    "bullmq": "^5.77.3",
+    "compression": "^1.8.1",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.5.2",
+    "fast-xml-parser": "^5.8.0",
+    "helmet": "^8.2.0",
+    "hpp": "^0.2.3",
+    "jsonwebtoken": "^9.0.3",
+    "morgan": "^1.10.1",
+    "multer": "^2.1.1",
+    "nodemailer": "^8.0.8",
+    "redis": "^5.12.1",
+    "winston": "^3.19.0",
+    "xml-crypto": "^6.1.2",
+    "xss-clean": "^0.1.4",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "eslint": "^10.4.0",
+    "nodemon": "^3.1.14",
+    "prettier": "^3.8.3",
+    "prisma": "^5.22.0"
+  }
+}
